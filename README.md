@@ -2,7 +2,7 @@
 
 A quantitative research project exploring how markets move, how to price
 derivatives on that randomness, and how to test trading strategies. Built as a
-learning project alongside a Year-2 Physics degree, aimed at quantitative finance.
+learning project alongise a physics degree, aimed at quantitative finance.
 
 Built with AI assistance as a learning project.
 
