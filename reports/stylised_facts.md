@@ -1,4 +1,4 @@
-# Week 2 — Stylised Facts of Asset Returns
+# Stylised Facts of Asset Returns
 
 **Data:** AAPL daily adjusted close, 2015–2024 (2,263 daily log returns).
 **Goal:** Test whether real equity returns match the textbook assumption that
