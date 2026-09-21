@@ -17,10 +17,12 @@ In progress. Currently implemented:
   model (Euler-Maruyama), plus calibration to historical data
 - `pricing/` — the Black-Scholes formula and Monte Carlo option pricers
   (European, Asian), with variance reduction
+- `backtest/` — a vectorised strategy backtester (no look-ahead, transaction
+  costs, turnover) with Sharpe / drawdown metrics and bootstrap confidence intervals
 - `tests/` — unit tests for returns, pricing, and the models
 
-Planned: a strategy backtester (honest costs, no look-ahead), then market
-microstructure.
+Planned: market microstructure, and extending the backtest to a basket of assets
+with walk-forward validation.
 
 ## Key results so far
 
@@ -36,6 +38,10 @@ microstructure.
   volatility level but no fat tails; calibrated Heston reproduces the fat tails,
   while its negative skew is shown to be a discretisation artifact rather than a
   captured leverage effect (an honest limitation). See `reports/calibration.md`.
+- **Backtesting:** a moving-average trend rule on AAPL beat buy-and-hold in- and
+  out-of-sample, but the edge is within statistical noise (Sharpe difference 0.48,
+  95% CI [-0.31, 1.33]) — a deliberately honest, rigorously-evaluated null result.
+  See `reports/strategy_backtest.md`.
 
 ## What's inside
 
