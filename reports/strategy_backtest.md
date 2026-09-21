@@ -68,13 +68,34 @@ in-sample fit.
 The difference interval **includes zero**: the outperformance is **not
 statistically significant**. Four years of data barely constrains a Sharpe ratio.
 
+## Multi-asset basket test
+
+To address the single-stock limitation, the same strategy (200-day window, fixed
+a priori) was applied to a basket of 20 large-cap US stocks, forming an
+equal-weight portfolio of the trend strategies and of buy-and-hold.
+
+| Quantity | Sharpe | 95% confidence interval |
+|---|---|---|
+| Trend portfolio | 1.10 | [0.41, 1.81] |
+| Buy-and-hold portfolio | 0.99 | [0.32, 1.65] |
+| Difference | 0.11 | [-0.31, 0.55] |
+
+Across the basket the edge shrank to a small +0.11 and remained statistically
+insignificant. A subtle point: the paired difference interval narrowed (roughly
+halved versus the single stock) because diversification cancels idiosyncratic
+noise, but the individual Sharpe intervals barely tightened. The precision of a
+Sharpe ratio is governed by the length of the track record in time, not the
+number of assets.
+
 ## Conclusion
 
-A 20-day trend rule on Apple beat buy-and-hold both in-sample and out-of-sample,
-but the edge is within statistical noise and cannot be claimed as real. This is a
-deliberately honest, null-ish result: the apparent single-parameter "win" was an
-overfitting artifact, and even the out-of-sample outperformance is indistinguishable
-from luck given the data.
+Neither on Apple alone nor across a 20-stock basket does a moving-average trend
+rule show a statistically significant edge over buy-and-hold after costs. The
+single-stock "win" (20-day window, Sharpe 1.42) was an overfitting artifact; with
+a conventional window chosen a priori and applied across many names, the edge is a
+small +0.11, well within the noise (95% CI [-0.31, 0.55]). This is a deliberately
+honest, rigorously-evaluated null result: a real edge is hard to establish, and
+detecting one this small would require a much longer history.
 
 ## Limitations and next steps
 
@@ -91,5 +112,7 @@ python backtest_check.py     # engine sanity check + benchmark metrics
 python run_strategy.py        # 200-day strategy vs benchmark
 python param_sweep.py         # Sharpe vs window (overfitting)
 python train_test.py          # out-of-sample evaluation
-python uncertainty.py         # bootstrap confidence intervals
+python uncertainty.py         # bootstrap confidence intervals (single stock)
+python portfolio.py           # 20-stock basket
+python uncertainty_portfolio.py  # bootstrap the basket difference
 ```

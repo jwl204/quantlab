@@ -38,10 +38,10 @@ with walk-forward validation.
   volatility level but no fat tails; calibrated Heston reproduces the fat tails,
   while its negative skew is shown to be a discretisation artifact rather than a
   captured leverage effect (an honest limitation). See `reports/calibration.md`.
-- **Backtesting:** a moving-average trend rule on AAPL beat buy-and-hold in- and
-  out-of-sample, but the edge is within statistical noise (Sharpe difference 0.48,
-  95% CI [-0.31, 1.33]) — a deliberately honest, rigorously-evaluated null result.
-  See `reports/strategy_backtest.md`.
+- **Backtesting:** a rigorously-evaluated trend-following study (single stock and a
+  20-stock basket) finds no statistically significant edge over buy-and-hold after
+  costs (basket Sharpe difference +0.11, 95% CI [-0.31, 0.55]); the apparent
+  single-stock win was overfitting. See `reports/strategy_backtest.md`.
 
 ## What's inside
 
