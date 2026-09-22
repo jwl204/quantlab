@@ -80,8 +80,11 @@ shows is numerical, not economic.
 - This is a physical-measure (P) calibration; rho and the volatility skew are far
   better recovered from option prices (Q-measure) with the semi-analytic Heston
   pricer.
-- A log-Euler or Milstein scheme respecting the Feller condition would remove the
-  spurious skew.
+- A log-Euler scheme (now implemented; see `reports/heston.md` and
+  `reports/figures/heston_convergence.png`) halves the spurious skew (-0.178 to
+  -0.086 at rho = 0) and keeps prices positive. The residual reflects the violated
+  Feller condition (0.64); a higher-order scheme (e.g. Andersen QE) would reduce it
+  further.
 
 ## How to reproduce
 

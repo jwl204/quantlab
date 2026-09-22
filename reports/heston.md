@@ -52,6 +52,24 @@ individual time-step is Gaussian. The model therefore regenerates all three
 stylised facts originally found in Apple's returns — the empirics and the model
 meet in the middle.
 
+## Numerical scheme and convergence
+
+Two discretisation schemes are provided: an arithmetic Euler update (educational) and
+a log-price Euler update (`scheme="log-euler"`). A convergence study prices a European
+call under both across time-step grids (25-1000) with common random numbers, reporting
+price, Monte Carlo standard error, bias against a fine-grid reference, runtime, and the
+truncation frequency.
+
+![Heston discretisation bias vs steps](figures/heston_convergence.png)
+
+Findings: the Feller ratio is 0.640 (violated), so variance truncation is active,
+falling from 4.7% of steps at 25 steps to 0.4% at 1000. Both schemes converge to the
+reference and give near-identical option prices. Their real difference is in the return
+distribution: with rho = 0 the true skew is zero, but the arithmetic scheme fabricates
+a skew of -0.178, which the log-Euler scheme halves to -0.086 while guaranteeing
+positive prices. The residual reflects the violated Feller condition; a higher-order
+scheme (e.g. Andersen quadratic-exponential) would reduce it further.
+
 ## Next
 
 Calibration: fitting the Heston parameters to real market data.
@@ -61,4 +79,5 @@ Calibration: fitting the Heston parameters to real market data.
 ```
 python heston_paths.py
 python heston_stylised_facts.py
+python heston_convergence.py
 ```
