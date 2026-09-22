@@ -46,9 +46,10 @@ Planned: walk-forward with point-in-time constituents; market microstructure.
 - **Backtesting:** a trend-following study on a 20-stock basket, using holdings-based
   portfolio accounting and a dependence-aware moving-block bootstrap, finds no
   statistically significant Sharpe advantage over a true buy-and-hold after costs
-  (difference -0.003; 95% CI covers zero). An earlier draft's apparent edge was
-  traced to a mislabelled rebalanced benchmark and an IID bootstrap, and corrected.
-  See `reports/strategy_backtest.md`.
+  (difference -0.003; 95% CI covers zero), a result that persists under an
+  expanding-window walk-forward with per-fold retuning. An earlier draft's apparent
+  edge was traced to a mislabelled rebalanced benchmark and an IID bootstrap, and
+  corrected. See `reports/strategy_backtest.md`.
 
 ## Setup
 
@@ -65,6 +66,7 @@ python -m empirical.stylised_facts   # the stylised-facts analysis
 python price_option.py               # Monte Carlo vs Black-Scholes, and an Asian option
 python calibrate.py                  # estimate GBM and Heston from data
 python run_basket.py                 # holdings-based portfolios: BH, rebalanced, strategy
-python uncertainty_block.py          # paired moving-block bootstrap of the Sharpe difference
+python walk_forward.py               # expanding-window walk-forward validation
+python run_research.py               # regenerate all headline results + provenance manifest
 pytest -q                            # run the tests
 ```
