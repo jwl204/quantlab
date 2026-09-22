@@ -1,0 +1,33 @@
+{
+  "name": "basket",
+  "provider": "yfinance",
+  "adjustment": "auto_adjust=True (dividends and splits)",
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "GOOGL",
+    "AMZN",
+    "JPM",
+    "XOM",
+    "JNJ",
+    "PG",
+    "KO",
+    "WMT",
+    "NVDA",
+    "META",
+    "V",
+    "HD",
+    "DIS",
+    "INTC",
+    "CSCO",
+    "PFE",
+    "BA",
+    "MCD"
+  ],
+  "start": "2015-01-01",
+  "end": "2024-01-01",
+  "rows": 2264,
+  "cols": 20,
+  "retrieved_utc": "2026-09-22T14:52:16.223059+00:00",
+  "sha256": "4c27b3c5ab6fa036ed6bc9bc4903a25e3cfbef6fce7b5ee097cfdf2fff043608"
+}
