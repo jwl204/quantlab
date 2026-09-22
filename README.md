@@ -6,6 +6,8 @@ learning project alongside a physics degree, aimed at quantitative finance.
 
 Built with AI assistance as a learning project.
 
+**Full write-up: [`reports/final_report.md`](reports/final_report.md).**
+
 ## Status
 
 In progress. Currently implemented:
