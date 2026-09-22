@@ -1,0 +1,11 @@
+,0
+mc_price,10.4512
+bs_price,10.4506
+pricing_rel_error_pct,0.006
+aapl_excess_kurtosis,5.416
+aapl_skewness,-0.226
+strategy_sharpe,1.059
+buy_and_hold_sharpe,1.062
+sharpe_diff,-0.003
+sharpe_diff_ci95,"[np.float64(-0.383), np.float64(0.433)]"
+p_strategy_better,0.517

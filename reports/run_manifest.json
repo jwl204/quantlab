@@ -1,0 +1,57 @@
+{
+  "generated_utc": "2026-09-22T11:50:06+00:00",
+  "git_commit": "95eee3574e6952a5857b5d0f602a6852b9cf30a4",
+  "python": "3.14.6",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "packages": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "scipy": "1.18.0",
+    "statsmodels": "0.14.6",
+    "matplotlib": "3.11.0"
+  },
+  "config": {
+    "seed": 0,
+    "universe": [
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "JPM",
+      "XOM",
+      "JNJ",
+      "PG",
+      "KO",
+      "WMT",
+      "NVDA",
+      "META",
+      "V",
+      "HD",
+      "DIS",
+      "INTC",
+      "CSCO",
+      "PFE",
+      "BA",
+      "MCD"
+    ],
+    "start": "2015-01-01",
+    "end": "2024-01-01",
+    "window": 200,
+    "cost_bps": 5.0
+  },
+  "results": {
+    "mc_price": 10.4512,
+    "bs_price": 10.4506,
+    "pricing_rel_error_pct": 0.006,
+    "aapl_excess_kurtosis": 5.416,
+    "aapl_skewness": -0.226,
+    "strategy_sharpe": 1.059,
+    "buy_and_hold_sharpe": 1.062,
+    "sharpe_diff": -0.003,
+    "sharpe_diff_ci95": [
+      -0.383,
+      0.433
+    ],
+    "p_strategy_better": 0.517
+  }
+}

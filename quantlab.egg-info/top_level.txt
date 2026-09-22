@@ -1,5 +1,0 @@
-backtest
-core
-empirical
-models
-pricing

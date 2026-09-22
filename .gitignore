@@ -5,5 +5,5 @@ __pycache__/
 data/
 .DS_Store
 .pytest_cache/
-strat_port.csv
-bench_port.csv
+/*.csv
+*.egg-info/
