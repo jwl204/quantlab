@@ -86,6 +86,33 @@ continuous strategy scores Sharpe 0.987 versus buy-and-hold's 1.004 (difference
 better 0.48). Even with per-fold retuning and transition costs, there is no
 out-of-sample edge.
 
+## Robustness and sensitivity
+
+The primary result is robust to the main modelling choices, and the small edge does
+not survive realistic assumptions.
+
+Transaction costs -- the strategy only matches buy-and-hold at zero cost:
+
+| Cost (bps) | Strategy Sharpe | Buy-and-hold Sharpe | Difference |
+|---|---|---|---|
+| 0 | 1.071 | 1.062 | +0.009 |
+| 5 | 1.059 | 1.062 | -0.003 |
+| 10 | 1.047 | 1.062 | -0.015 |
+| 20 | 1.022 | 1.061 | -0.039 |
+| 50 | 0.949 | 1.060 | -0.110 |
+
+Execution lag and rebalancing -- a two-day rather than one-day execution lag worsens
+the difference (-0.003 to -0.048), as does quarterly rather than monthly rebalancing
+(-0.045). The result does not survive more conservative execution assumptions.
+
+Inference method -- the paired moving-block and stationary bootstraps agree closely
+(95% CI [-0.383, +0.436] vs [-0.382, +0.450]), so the interval is not an artifact of
+the fixed block length.
+
+Multiple testing -- across the five candidate windows, the Deflated Sharpe Ratio of
+the best in-sample active return is 0.065 (far below 0.95): once the number of trials
+is accounted for, the best-of-several result is not statistically significant.
+
 ## Universe and survivorship bias (limitation)
 
 The 20 tickers are large, liquid companies selected by hand at the present day. This
@@ -103,7 +130,7 @@ buy-and-hold** (difference -0.003; 95% CI covers zero for all block lengths). It
 delivers materially less total wealth and far higher turnover. The apparent
 single-stock "win" in the earlier draft was overfitting; the earlier basket "win" was
 an artifact of a mislabelled rebalanced benchmark and an over-confident IID bootstrap.
-Corrected, the result is a clean, well-supported null. The null also holds under a walk-forward evaluation that re-tunes the window each fold (a stateful walk-forward out-of-sample Sharpe difference of -0.017, 95% CI [-0.278, +0.258]).
+Corrected, the result is a clean, well-supported null. The null also holds under a walk-forward evaluation that re-tunes the window each fold (a stateful walk-forward out-of-sample Sharpe difference of -0.017, 95% CI [-0.278, +0.258]). It is robust to cost, execution-lag, rebalance and bootstrap-method choices, and the best-of-five-windows result is not significant after a deflated-Sharpe multiple-testing correction (0.065).
 
 ## Limitations and next steps
 
@@ -115,10 +142,12 @@ Corrected, the result is a clean, well-supported null. The null also holds under
 ## How to reproduce
 
 ```
-pytest -q                    # 13 tests incl. a no-look-ahead leakage test
+pytest -q                    # 30 tests incl. leakage, accounting and walk-forward invariants
 python run_basket.py         # three portfolios: true BH, rebalanced EW, strategy
 python uncertainty_block.py  # paired moving-block bootstrap (single split)
 python walk_forward.py       # stateful walk-forward with per-fold retuning
 python oos_uncertainty.py    # bootstrap of the stitched out-of-sample difference
+python sensitivity.py        # cost / execution-lag / rebalance sensitivity grids
+python robustness.py         # stationary bootstrap + deflated Sharpe (multiple testing)
 python run_research.py       # regenerate all headline results + a provenance manifest
 ```
