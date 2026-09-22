@@ -16,8 +16,9 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check .
       - run: ruff format --check .
-      - run: pytest -q --cov=core --cov=models --cov=pricing --cov=backtest
-      - run: python run_research.py   # offline reproduction from the committed snapshot
+      - run: pytest -q --cov=core --cov=models --cov=pricing --cov=backtest --cov=microstructure
+      - run: python run_research.py       # offline reproduction from the committed snapshot
+      - run: python run_microstructure.py  # offline market-making experiment (no market data)
 
   types:
     runs-on: ubuntu-latest
@@ -27,4 +28,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: mypy core models pricing backtest
+      - run: mypy core models pricing backtest microstructure
