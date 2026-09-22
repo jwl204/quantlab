@@ -84,7 +84,8 @@ lo, hi = np.percentile(d, [2.5, 97.5])
 results["strategy_sharpe"] = round(float(sharpe(strat_ret.to_numpy())), 3)
 results["buy_and_hold_sharpe"] = round(float(sharpe(bh_ret.to_numpy())), 3)
 results["sharpe_diff"] = round(results["strategy_sharpe"] - results["buy_and_hold_sharpe"], 3)
-results["sharpe_diff_ci95"] = [round(lo, 3), round(hi, 3)]
+results["sharpe_diff_ci_low"] = float(round(lo, 3))
+results["sharpe_diff_ci_high"] = float(round(hi, 3))
 results["p_strategy_better"] = round(float((d > 0).mean()), 3)
 
 

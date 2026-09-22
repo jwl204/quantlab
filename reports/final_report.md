@@ -109,11 +109,11 @@ limitation: the hand-picked universe carries survivorship bias.
 ## 7. Reproducibility
 
 ```
-python -m venv .venv && pip install -r requirements.txt
+python -m venv .venv && pip install -e ".[dev]"
 python -m empirical.stylised_facts   # the stylised facts
 python price_option.py               # pricing vs Black-Scholes
 python calibrate.py                  # model calibration
-python portfolio.py                  # the basket strategy study
+python run_basket.py                 # the basket strategy study
 pytest -q                            # all tests
 ```
 
