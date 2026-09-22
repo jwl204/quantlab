@@ -1,6 +1,6 @@
 {
-  "generated_utc": "2026-09-22T11:50:06+00:00",
-  "git_commit": "95eee3574e6952a5857b5d0f602a6852b9cf30a4",
+  "generated_utc": "2026-09-22T14:08:24+00:00",
+  "git_commit": "12f3405709b7c0ac22a99bf4c7401b64b22cc71d",
   "python": "3.14.6",
   "platform": "Windows-11-10.0.26200-SP0",
   "packages": {
@@ -48,10 +48,8 @@
     "strategy_sharpe": 1.059,
     "buy_and_hold_sharpe": 1.062,
     "sharpe_diff": -0.003,
-    "sharpe_diff_ci95": [
-      -0.383,
-      0.433
-    ],
+    "sharpe_diff_ci_low": -0.383,
+    "sharpe_diff_ci_high": 0.433,
     "p_strategy_better": 0.517
   }
 }
