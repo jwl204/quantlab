@@ -1,6 +1,6 @@
 {
-  "generated_utc": "2026-09-22T14:08:24+00:00",
-  "git_commit": "12f3405709b7c0ac22a99bf4c7401b64b22cc71d",
+  "generated_utc": "2026-09-22T14:53:41+00:00",
+  "git_commit": "e9a23b8307541bcb21b52449dfa8831ca6958a79",
   "python": "3.14.6",
   "platform": "Windows-11-10.0.26200-SP0",
   "packages": {
@@ -10,32 +10,11 @@
     "statsmodels": "0.14.6",
     "matplotlib": "3.11.0"
   },
+  "data_snapshot": "basket",
+  "data_snapshot_sha256": "4c27b3c5ab6fa036ed6bc9bc4903a25e3cfbef6fce7b5ee097cfdf2fff043608",
   "config": {
     "seed": 0,
-    "universe": [
-      "AAPL",
-      "MSFT",
-      "GOOGL",
-      "AMZN",
-      "JPM",
-      "XOM",
-      "JNJ",
-      "PG",
-      "KO",
-      "WMT",
-      "NVDA",
-      "META",
-      "V",
-      "HD",
-      "DIS",
-      "INTC",
-      "CSCO",
-      "PFE",
-      "BA",
-      "MCD"
-    ],
-    "start": "2015-01-01",
-    "end": "2024-01-01",
+    "snapshot": "basket",
     "window": 200,
     "cost_bps": 5.0
   },
