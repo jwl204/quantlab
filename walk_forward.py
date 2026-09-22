@@ -2,77 +2,34 @@ import numpy as np
 import pandas as pd
 
 from backtest.portfolio import simulate_portfolio
-from backtest.strategies import ma_trend_signal
-from core.data import load_prices
+from backtest.walk_forward import run_walk_forward, sharpe
+from core.snapshots import load_snapshot
 
-tickers = [
-    "AAPL",
-    "MSFT",
-    "GOOGL",
-    "AMZN",
-    "JPM",
-    "XOM",
-    "JNJ",
-    "PG",
-    "KO",
-    "WMT",
-    "NVDA",
-    "META",
-    "V",
-    "HD",
-    "DIS",
-    "INTC",
-    "CSCO",
-    "PFE",
-    "BA",
-    "MCD",
-]
-start, end, cost_bps = "2015-01-01", "2024-01-01", 5.0
-candidate_windows = [50, 100, 150, 200, 250]
-
-prices = pd.DataFrame({tk: load_prices(tk, start, end) for tk in tickers}).dropna()
+prices = load_snapshot("basket")
 dates = prices.index
-n = len(tickers)
-month_ends = pd.Series(index=dates, data=dates).resample("ME").last().dropna().values
+n = prices.shape[1]
 
+portfolio, folds = run_walk_forward(prices, [50, 100, 150, 200, 250], n_folds=5, cost_bps=5.0)
+strat = portfolio["net_return"]
 
-def strategy_returns(window):
-    raw = pd.DataFrame({tk: ma_trend_signal(prices[tk], window) for tk in tickers})
-    raw = raw.shift(1).fillna(0.0)
-    w = raw.div(raw.sum(axis=1).replace(0.0, np.nan), axis=0).fillna(0.0)
-    return simulate_portfolio(prices, w, month_ends, cost_bps=cost_bps)["net_return"]
+first_test = folds[0]["test_start"]
+oos = dates >= np.datetime64(first_test)
+oos_start = dates[oos][0]
+ew = pd.DataFrame(1.0 / n, index=dates, columns=prices.columns)
+bh = simulate_portfolio(prices, ew, [oos_start], cost_bps=5.0)["net_return"]
 
-
-def sharpe(r):
-    return r.mean() / r.std() * np.sqrt(252)
-
-
-strat_by_w = {w: strategy_returns(w) for w in candidate_windows}
-ew = pd.DataFrame(1.0 / n, index=dates, columns=tickers)
-bh = simulate_portfolio(prices, ew, [dates[0]], cost_bps=cost_bps)["net_return"]
-
-fold_edges = pd.date_range(dates[0], dates[-1], periods=6)
-oos = []
 print(f"{'Test period':24s} {'window':>6s} {'strat':>6s} {'BH':>6s} {'diff':>7s}")
-for i in range(1, 6):
-    test_start, test_end = fold_edges[i - 1], fold_edges[i]
-    train_mask = dates < test_start
-    test_mask = (dates >= test_start) & (dates < test_end)
-    if train_mask.sum() < 252:
-        continue
-    best = max(candidate_windows, key=lambda w: sharpe(strat_by_w[w][train_mask]))
-    test_r = strat_by_w[best][test_mask]
-    oos.append(test_r)
+for f in folds:
+    m = (dates >= f["test_start"]) & (dates < f["test_end"])
     print(
-        f"{test_start.date()!s} to {test_end.date()!s}  {best:>6d} "
-        f"{sharpe(test_r):6.2f} {sharpe(bh[test_mask]):6.2f} {sharpe(test_r) - sharpe(bh[test_mask]):+7.2f}"
+        f"{f['test_start'].date()!s} to {f['test_end'].date()!s}  {f['selected_window']:>6d} "
+        f"{sharpe(strat[m]):6.2f} {sharpe(bh[m]):6.2f} {sharpe(strat[m]) - sharpe(bh[m]):+7.2f}"
     )
 
-oos_series = pd.concat(oos)
-bh_oos = bh[oos_series.index]
+so, bo = strat[oos], bh[oos]
 print(
-    f"\nStitched out-of-sample: strategy Sharpe {sharpe(oos_series):.3f}, "
-    f"buy-and-hold {sharpe(bh_oos):.3f}, diff {sharpe(oos_series) - sharpe(bh_oos):+.3f}"
+    f"\nStateful stitched OOS: strategy Sharpe {sharpe(so):.3f}, "
+    f"buy-and-hold {sharpe(bo):.3f}, diff {sharpe(so) - sharpe(bo):+.3f}"
 )
-oos_series.to_csv("oos_ret.csv")
-bh_oos.to_csv("bh_oos_ret.csv")
+so.to_csv("oos_ret.csv")
+bo.to_csv("bh_oos_ret.csv")

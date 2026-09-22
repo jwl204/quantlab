@@ -64,24 +64,27 @@ probability of the strategy being better close to a coin flip. The intervals wid
 with block length, which is exactly why the earlier IID bootstrap (effectively a
 one-day block) understated the uncertainty.
 
-## Walk-forward validation
+## Walk-forward validation (stateful)
 
-A single train/test split is fragile, so the strategy was also evaluated with an
-expanding-window walk-forward: in each of four sequential out-of-sample folds, the
-moving-average window was re-selected (from 50-250 days) using only prior data, then
-applied to the unseen fold.
+A single train/test split is fragile, so the strategy was also evaluated with a
+stateful expanding-window walk-forward: one continuous portfolio is carried across
+four sequential out-of-sample folds, and in each fold the moving-average window is
+re-selected (from 50-250 days) using only prior data. Because a single live portfolio
+persists across folds, the transition trade and its cost are charged whenever the
+selected window changes.
 
 | Test period | Selected window | Strategy Sharpe | Buy-and-hold Sharpe | Difference |
 |---|---|---|---|---|
-| 2016-10 to 2018-08 | 150 | 2.03 | 2.31 | -0.29 |
-| 2018-08 to 2020-05 | 150 | 0.64 | 0.54 | +0.10 |
-| 2020-05 to 2022-03 | 100 | 1.31 | 1.19 | +0.12 |
-| 2022-03 to 2023-12 | 100 | 0.60 | 0.98 | -0.38 |
+| 2016-10 to 2018-08 | 150 | 2.00 | 2.33 | -0.33 |
+| 2018-08 to 2020-05 | 150 | 0.64 | 0.48 | +0.16 |
+| 2020-05 to 2022-03 | 100 | 1.32 | 1.20 | +0.13 |
+| 2022-03 to 2023-12 | 100 | 0.60 | 0.89 | -0.30 |
 
-The selected window adapts and the folds are mixed (two wins, two losses). Stitched
-across all folds, the strategy scores Sharpe 0.994 versus buy-and-hold's 1.072
-(difference -0.078; block-bootstrap 95% CI [-0.437, +0.326], probability the strategy
-is better 0.37). Even with per-fold retuning, there is no out-of-sample edge.
+The selected window adapts and the folds are mixed. Stitched across all folds, the
+continuous strategy scores Sharpe 0.987 versus buy-and-hold's 1.004 (difference
+-0.017; paired block-bootstrap 95% CI [-0.278, +0.258], probability the strategy is
+better 0.48). Even with per-fold retuning and transition costs, there is no
+out-of-sample edge.
 
 ## Universe and survivorship bias (limitation)
 
@@ -100,7 +103,7 @@ buy-and-hold** (difference -0.003; 95% CI covers zero for all block lengths). It
 delivers materially less total wealth and far higher turnover. The apparent
 single-stock "win" in the earlier draft was overfitting; the earlier basket "win" was
 an artifact of a mislabelled rebalanced benchmark and an over-confident IID bootstrap.
-Corrected, the result is a clean, well-supported null. The null also holds under a walk-forward evaluation that re-tunes the window each fold (stitched out-of-sample Sharpe difference -0.078, 95% CI [-0.437, +0.326]).
+Corrected, the result is a clean, well-supported null. The null also holds under a walk-forward evaluation that re-tunes the window each fold (a stateful walk-forward out-of-sample Sharpe difference of -0.017, 95% CI [-0.278, +0.258]).
 
 ## Limitations and next steps
 
@@ -115,7 +118,7 @@ Corrected, the result is a clean, well-supported null. The null also holds under
 pytest -q                    # 13 tests incl. a no-look-ahead leakage test
 python run_basket.py         # three portfolios: true BH, rebalanced EW, strategy
 python uncertainty_block.py  # paired moving-block bootstrap (single split)
-python walk_forward.py       # expanding-window walk-forward with per-fold retuning
+python walk_forward.py       # stateful walk-forward with per-fold retuning
 python oos_uncertainty.py    # bootstrap of the stitched out-of-sample difference
 python run_research.py       # regenerate all headline results + a provenance manifest
 ```

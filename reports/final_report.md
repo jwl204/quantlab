@@ -90,7 +90,7 @@ the strategy shows no Sharpe advantage (1.059 vs 1.062), delivers roughly half t
 total wealth (4.70x vs 8.68x), and trades about 40x more. A paired moving-block
 bootstrap puts the Sharpe difference at -0.003, with a 95% interval covering zero at
 every block length. The same null holds under an expanding-window walk-forward that
-re-tunes the window each fold (stitched out-of-sample Sharpe difference -0.078).
+re-tunes the window each fold as one continuous portfolio (out-of-sample Sharpe difference -0.017, transition costs charged).
 
 **Conclusion:** no statistically significant Sharpe advantage for trend-following
 over a true buy-and-hold after costs — a clean, dependence-aware null result. A
