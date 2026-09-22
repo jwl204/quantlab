@@ -8,8 +8,10 @@ bs = bs_european_call(**params)
 N = 10000
 
 plain = [mc_call_terminal(**params, n_paths=N, seed=s) - bs for s in range(300)]
-anti = [mc_call_terminal(**params, n_paths=N, seed=s, antithetic=True) - bs
-        for s in range(300)]
+anti = [
+    mc_call_terminal(**params, n_paths=N, seed=s, antithetic=True) - bs
+    for s in range(300)
+]
 
 plain_rms = np.sqrt(np.mean(np.square(plain)))
 anti_rms = np.sqrt(np.mean(np.square(anti)))

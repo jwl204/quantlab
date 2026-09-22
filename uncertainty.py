@@ -24,8 +24,16 @@ def boot_ci(r, n=5000, seed=0):
     return np.percentile(stats, [2.5, 97.5])
 
 
-print("Strategy  Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(sharpe(strat_r), *boot_ci(strat_r)))
-print("Benchmark Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(sharpe(bench_r), *boot_ci(bench_r, seed=1)))
+print(
+    "Strategy  Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(
+        sharpe(strat_r), *boot_ci(strat_r)
+    )
+)
+print(
+    "Benchmark Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(
+        sharpe(bench_r), *boot_ci(bench_r, seed=1)
+    )
+)
 
 rng = np.random.default_rng(2)
 idx = np.arange(len(strat_r))
@@ -34,4 +42,6 @@ for _ in range(5000):
     take = rng.choice(idx, len(idx), replace=True)
     diffs.append(sharpe(strat_r[take]) - sharpe(bench_r[take]))
 lo, hi = np.percentile(diffs, [2.5, 97.5])
-print("Sharpe difference {:.2f}  95% CI [{:.2f}, {:.2f}]".format(np.mean(diffs), lo, hi))
+print(
+    "Sharpe difference {:.2f}  95% CI [{:.2f}, {:.2f}]".format(np.mean(diffs), lo, hi)
+)

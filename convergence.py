@@ -10,8 +10,10 @@ bs = bs_european_call(**params)
 path_counts = [100, 300, 1000, 3000, 10000, 30000]
 rms_errors = []
 for n in path_counts:
-    errs = [mc_european_call(**params, n_steps=100, n_paths=n, seed=s) - bs
-            for s in range(10)]
+    errs = [
+        mc_european_call(**params, n_steps=100, n_paths=n, seed=s) - bs
+        for s in range(10)
+    ]
     rms_errors.append(np.sqrt(np.mean(np.square(errs))))
 
 plt.loglog(path_counts, rms_errors, "o-", label="RMS Monte Carlo error")

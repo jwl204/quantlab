@@ -24,9 +24,10 @@ def mc_call_terminal(s0, K, r, sigma, T, n_paths, seed=None, antithetic=False):
         z = np.concatenate([half, -half])
     else:
         z = rng.standard_normal(n_paths)
-    sT = s0 * np.exp((r - 0.5 * sigma ** 2) * T + sigma * np.sqrt(T) * z)
+    sT = s0 * np.exp((r - 0.5 * sigma**2) * T + sigma * np.sqrt(T) * z)
     payoffs = np.maximum(sT - K, 0.0)
     return np.exp(-r * T) * payoffs.mean()
+
 
 def mc_asian_call(s0, K, r, sigma, T, n_steps, n_paths, seed=None):
     """Price an arithmetic-average Asian call by Monte Carlo (no closed form)."""

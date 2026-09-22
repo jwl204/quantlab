@@ -1,0 +1,26 @@
+[project]
+name = "quantlab"
+version = "0.1.0"
+description = "Quantitative research: empirical analysis, option pricing, and strategy backtesting."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "statsmodels",
+    "matplotlib",
+    "yfinance",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "models", "pricing", "backtest", "empirical"]
+
+[tool.ruff]
+line-length = 100

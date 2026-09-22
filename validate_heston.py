@@ -13,9 +13,19 @@ mu, sigma = calibrate_gbm(rets)
 hp = calibrate_heston(rets)
 
 n = len(rets)
-S, v = simulate_heston(s0=100, v0=hp["v0"], mu=mu, kappa=hp["kappa"],
-                       theta=hp["theta"], xi=hp["xi"], rho=hp["rho"],
-                       T=n / 252, n_steps=n, n_paths=20, seed=1)
+S, v = simulate_heston(
+    s0=100,
+    v0=hp["v0"],
+    mu=mu,
+    kappa=hp["kappa"],
+    theta=hp["theta"],
+    xi=hp["xi"],
+    rho=hp["rho"],
+    T=n / 252,
+    n_steps=n,
+    n_paths=20,
+    seed=1,
+)
 heston_rets = np.log(S[:, 1:] / S[:, :-1]).flatten()
 
 print("Real AAPL   excess kurtosis:", stats.kurtosis(rets))
@@ -24,8 +34,9 @@ print("Real AAPL   skewness:       ", stats.skew(rets))
 print("Heston      skewness:       ", stats.skew(heston_rets))
 
 plt.hist(rets, bins=100, density=True, alpha=0.5, label="Real AAPL returns")
-plt.hist(heston_rets, bins=200, density=True, alpha=0.5,
-         label="Calibrated Heston returns")
+plt.hist(
+    heston_rets, bins=200, density=True, alpha=0.5, label="Calibrated Heston returns"
+)
 plt.xlim(-0.15, 0.15)
 plt.title("Real vs calibrated-Heston return distributions")
 plt.xlabel("Daily log return")

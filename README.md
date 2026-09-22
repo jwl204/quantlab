@@ -1,5 +1,7 @@
 # QuantLab
 
+[![CI](https://github.com/jwl204/quantlab/actions/workflows/ci.yml/badge.svg)](https://github.com/jwl204/quantlab/actions/workflows/ci.yml)
+
 A quantitative research project exploring how markets move, how to price
 derivatives on that randomness, and how to test trading strategies. Built as a
 learning project alongside a physics degree, aimed at quantitative finance.
@@ -53,7 +55,7 @@ Planned: walk-forward with point-in-time constituents; market microstructure.
 ```
 python -m venv .venv
 .venv\Scripts\Activate.ps1        # Windows (PowerShell)
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ## Run

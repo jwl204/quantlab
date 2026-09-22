@@ -12,8 +12,7 @@ rets = log_returns(prices)
 mu, sigma = calibrate_gbm(rets)
 
 n = len(rets)
-S = simulate_gbm(s0=100, mu=mu, sigma=sigma, T=n / 252,
-                 n_steps=n, n_paths=1, seed=1)
+S = simulate_gbm(s0=100, mu=mu, sigma=sigma, T=n / 252, n_steps=n, n_paths=1, seed=1)
 gbm_rets = np.log(S[0][1:] / S[0][:-1])
 
 print("Real AAPL excess kurtosis:      ", stats.kurtosis(rets))

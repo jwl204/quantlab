@@ -3,8 +3,19 @@ import numpy as np
 
 from models.heston import simulate_heston
 
-S, v = simulate_heston(s0=100, v0=0.04, mu=0.10, kappa=3.0, theta=0.04,
-                       xi=0.5, rho=-0.7, T=1.0, n_steps=252, n_paths=5, seed=42)
+S, v = simulate_heston(
+    s0=100,
+    v0=0.04,
+    mu=0.10,
+    kappa=3.0,
+    theta=0.04,
+    xi=0.5,
+    rho=-0.7,
+    T=1.0,
+    n_steps=252,
+    n_paths=5,
+    seed=42,
+)
 
 vol = np.sqrt(v)
 

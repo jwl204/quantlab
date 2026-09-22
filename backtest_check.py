@@ -9,7 +9,7 @@ from backtest.metrics import performance
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = simple_returns(prices)
 
-signal = pd.Series(1.0, index=rets.index)          # always fully long
+signal = pd.Series(1.0, index=rets.index)  # always fully long
 result = backtest(rets, signal, cost_bps=0.0)
 
 # From the second day on, the position is 1, so the strategy return

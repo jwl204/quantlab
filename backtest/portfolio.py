@@ -1,8 +1,9 @@
 import pandas as pd
 
 
-def simulate_portfolio(prices, target_weights, rebalance_dates,
-                       initial_cash=1.0, cost_bps=0.0):
+def simulate_portfolio(
+    prices, target_weights, rebalance_dates, initial_cash=1.0, cost_bps=0.0
+):
     """Portfolio simulator with explicit holdings, cash, turnover and costs.
 
     prices:          DataFrame (dates x assets) of prices.
@@ -19,7 +20,7 @@ def simulate_portfolio(prices, target_weights, rebalance_dates,
     rows = []
     for t in prices.index:
         px = prices.loc[t]
-        nav = cash + float((shares * px).sum())          # mark to market
+        nav = cash + float((shares * px).sum())  # mark to market
         turnover = cost = 0.0
         if t in reb:
             target_shares = (nav * target_weights.loc[t]) / px
@@ -28,9 +29,11 @@ def simulate_portfolio(prices, target_weights, rebalance_dates,
             turnover = traded_notional / nav
             shares = target_shares
             cash = nav - float((shares * px).sum()) - cost
-            nav = cash + float((shares * px).sum())       # after paying cost
+            nav = cash + float((shares * px).sum())  # after paying cost
         rows.append((t, nav, cash, turnover, cost))
 
-    out = pd.DataFrame(rows, columns=["date", "nav", "cash", "turnover", "cost"]).set_index("date")
+    out = pd.DataFrame(
+        rows, columns=["date", "nav", "cash", "turnover", "cost"]
+    ).set_index("date")
     out["net_return"] = out["nav"].pct_change().fillna(0.0)
     return out
