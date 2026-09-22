@@ -9,7 +9,7 @@ Real equity returns are not normally distributed — they have fat tails and
 volatility clustering. This project documents those facts empirically, builds and
 validates an option-pricing engine, develops a stochastic-volatility model that
 reproduces the facts from first principles, calibrates it to real data, and finally
-evaluates a trend-following trading strategy with full statistical rigour. Every
+evaluates a trend-following trading strategy with dependence-aware, out-of-sample methods. Every
 result is checked against a known answer or a defensible argument. The strategy
 study reaches a deliberately honest conclusion: no statistically significant edge
 over buy-and-hold after costs.
@@ -56,16 +56,16 @@ Antithetic variates gave a **2.1× variance reduction**, and a path-dependent As
 option (which has no closed-form price) was priced by simulation — demonstrating
 the method where no formula exists.
 
-## 4. A stochastic-volatility model, and its calibration
+## 4. A stochastic-volatility model, and its estimation
 
 The Heston model makes volatility itself random and mean-reverting. It reproduces
 all three empirical stylised facts (fat tails, volatility clustering, negative
-skew) purely from first principles. Calibrated to Apple returns, it captures the
+skew) endogenously, from random volatility alone. Estimated from Apple returns, it captures the
 fat tails well.
 
 ![Real vs calibrated Heston](figures/heston_goodness_of_fit.png)
 
-An important honest finding: the calibrated model's negative skew turned out to be
+An important honest finding: the estimated model's negative skew turned out to be
 a **discretisation artifact** of the simulation scheme, not a captured leverage
 effect — because the leverage parameter cannot be reliably estimated from returns
 (it is far better recovered from option prices). Recognising that an output can
@@ -73,24 +73,27 @@ look right for the wrong reason is central to the project.
 
 ## 5. Does a trading strategy work?
 
-A moving-average trend-following rule was evaluated with the full rigour of the
-research checklist: a look-ahead-safe backtester, realistic transaction costs and
-turnover, and comparison against a buy-and-hold benchmark.
+A moving-average trend rule on a 20-stock basket was evaluated with look-ahead
+control, realistic costs and turnover, explicit holdings-based portfolio accounting,
+and dependence-aware inference. (An earlier draft used a daily-rebalanced average
+mislabelled as buy-and-hold and an IID bootstrap; both were corrected — see the
+revision note in reports/strategy_backtest.md.)
 
-A parameter sweep revealed the classic overfitting trap — one window (20-day)
-appeared to beat the market as an isolated spike, while its neighbours collapsed.
+A parameter sweep first illustrated the overfitting trap: one window (20-day) beat
+the market as an isolated spike while its neighbours collapsed — the fingerprint of
+luck, not signal.
 
 ![Trend Sharpe vs window](figures/trend_param_sweep.png)
 
-Under a proper train/test split the 20-day rule did survive out-of-sample, but a
-bootstrap confidence interval showed the edge was not statistically significant.
-Extending to a 20-stock basket with a conventional window chosen a priori, the edge
-shrank to +0.11 in Sharpe with a 95% confidence interval of [−0.31, +0.55] — again
-not significant. A subtle but important lesson: the precision of a Sharpe ratio is
-governed by the length of the track record in *time*, not the number of assets.
+Using a conventional 200-day window fixed a priori and a true buy-and-hold benchmark,
+the strategy shows no Sharpe advantage (1.059 vs 1.062), delivers roughly half the
+total wealth (4.70x vs 8.68x), and trades about 40x more. A paired moving-block
+bootstrap puts the Sharpe difference at -0.003, with a 95% interval covering zero at
+every block length and the probability of the strategy being better near 0.5.
 
-**Conclusion:** no statistically significant edge for trend-following over
-buy-and-hold after costs — a rigorously-evaluated null result.
+**Conclusion:** no statistically significant Sharpe advantage for trend-following
+over a true buy-and-hold after costs — a clean, dependence-aware null result. A
+limitation: the hand-picked universe carries survivorship bias.
 
 ## 6. What this project demonstrates
 

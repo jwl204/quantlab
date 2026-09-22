@@ -1,118 +1,99 @@
-# Trend-Following on AAPL: An Honest Backtest
+# Trend-Following on a US Equity Basket: An Honest Backtest
+
+**Revision note (September 2026).** An earlier version of this study used the daily
+cross-sectional mean of returns as the benchmark — which is a *daily-rebalanced*
+equal-weight portfolio, not buy-and-hold — and estimated confidence intervals with
+an IID bootstrap, which understates the serial dependence in returns. Following a
+methodological review, the benchmark was reimplemented with explicit holdings-based
+portfolio accounting (true buy-and-hold, and a separately-labelled rebalanced
+benchmark), and the inference was replaced with a paired moving-block bootstrap.
+The results below use the corrected methods. The correction *strengthened* the
+conclusion. The earlier code remains in the Git history.
 
 ## Research question
 
-Does a simple moving-average trend-following rule on Apple produce risk-adjusted
-returns that beat buy-and-hold, out-of-sample and after transaction costs?
+Does a simple moving-average trend rule on a basket of US equities produce
+risk-adjusted returns that beat buy-and-hold, out-of-sample and after realistic
+transaction costs?
 
 ## Method
 
-- **Signal:** long (position 1) when the price is above its N-day moving average,
-  flat (0) otherwise.
-- **Engine:** positions are lagged one day (no look-ahead bias); a 5 bps
-  transaction cost is charged per unit of turnover; the equity curve is the
-  cumulative product of daily strategy returns.
-- **Benchmark:** buy-and-hold Apple.
-- **Metrics:** annualised Sharpe ratio, maximum drawdown, turnover, total return.
-- **Data:** AAPL daily returns, 2015-2024.
+- **Universe:** 20 large-cap US stocks; **200-day** trend window fixed *a priori*
+  (not tuned), applied identically to every stock; **5 bps** cost per unit turnover.
+- **Portfolio accounting:** an explicit holdings/cash engine (`backtest/portfolio.py`)
+  tracks shares, cash, NAV, turnover and cost. Three portfolios are built from the
+  same engine:
+  - *True buy-and-hold* — buy equal weight once; weights then drift with prices.
+  - *Monthly-rebalanced equal weight* — reset to equal weight each month (this is
+    what the earlier mislabelled benchmark approximated).
+  - *Trend strategy* — hold equal weight among stocks currently in an uptrend,
+    signals lagged one day (no look-ahead), rebalanced monthly.
+- **Inference:** paired moving-block bootstrap of the Sharpe difference, with
+  block-length sensitivity.
 
-## The benchmark (buy-and-hold)
+## Corrected results (2015-2024, 5 bps costs)
 
-| Metric | Value |
-|---|---|
-| Sharpe | 0.95 |
-| Max drawdown | -38.5% |
-| Annual turnover | ~0 |
-| Total return | +710% |
+| Portfolio | Sharpe | Turnover / yr | Growth of $1 |
+|---|---|---|---|
+| True buy-and-hold | 1.062 | 0.11 | 8.68x |
+| Monthly-rebalanced equal weight | 1.000 | 0.64 | 4.54x |
+| Trend strategy | 1.059 | 4.26 | 4.70x |
 
-A high bar — Apple was an excellent stock over the period.
+Two important observations. First, the earlier "buy-and-hold" number (Sharpe ~0.99)
+matches the *monthly-rebalanced* portfolio here (1.000), confirming the original
+mislabel. Second, *true* buy-and-hold is a much tougher benchmark: buying once lets
+winners compound, nearly doubling the final wealth versus the rebalanced version.
 
-## Single-parameter result (200-day window)
+Against the correct benchmark, the trend strategy shows **no Sharpe advantage**
+(1.059 vs 1.062), delivers barely half the wealth (4.70x vs 8.68x), and trades about
+**40x more** (turnover 4.26 vs 0.11 per year).
 
-The 200-day rule **underperformed**: Sharpe 0.76 vs 0.95, total return +273% vs
-+710%, and only a marginal drawdown improvement (-35.6% vs -38.5%), with high
-turnover (5.9x/year). It gave up large upside to sit out dips that were mostly
-temporary — trend-following pays off on sustained downtrends, not on a relentless
-riser.
+## Statistical inference (paired moving-block bootstrap)
 
-## Parameter sensitivity and the overfitting trap
+Strategy Sharpe 1.059, true buy-and-hold 1.062, difference -0.003.
 
-![Sharpe vs window](figures/trend_param_sweep.png)
+| Block length | Median diff | 95% CI | P(strategy better) |
+|---|---|---|---|
+| 5 days | +0.001 | [-0.378, +0.393] | 0.50 |
+| 10 days | +0.000 | [-0.388, +0.417] | 0.50 |
+| 20 days | +0.009 | [-0.383, +0.433] | 0.52 |
+| 40 days | +0.010 | [-0.379, +0.461] | 0.52 |
 
-Sweeping the window from 20 to 250 days, only the **20-day window** beat the
-benchmark (Sharpe 1.42) — as an isolated spike. Its neighbour (50-day) collapsed
-to 0.79. A genuine edge forms a plateau across nearby parameters, not a lone
-spike. Reporting the best of six windows would be multiple testing / overfitting.
+The Sharpe difference is indistinguishable from zero at every block length, with the
+probability of the strategy being better close to a coin flip. The intervals widen
+with block length, which is exactly why the earlier IID bootstrap (effectively a
+one-day block) understated the uncertainty.
 
-## Train/test split
+## Universe and survivorship bias (limitation)
 
-Choosing the window on 2015-2019 (train) and evaluating on 2020-2023 (test):
-
-| | Window | Sharpe |
-|---|---|---|
-| Best on train | 20 | 1.50 |
-| Same window on test | 20 | 1.39 |
-| Buy-and-hold on test | - | 0.91 |
-
-The in-sample winner **survived out-of-sample** — more encouraging than a pure
-in-sample fit.
-
-## Statistical uncertainty (bootstrap, test period)
-
-| Quantity | Sharpe | 95% confidence interval |
-|---|---|---|
-| Strategy | 1.39 | [0.42, 2.38] |
-| Benchmark | 0.91 | [-0.09, 1.91] |
-| Difference | 0.48 | [-0.31, 1.33] |
-
-The difference interval **includes zero**: the outperformance is **not
-statistically significant**. Four years of data barely constrains a Sharpe ratio.
-
-## Multi-asset basket test
-
-To address the single-stock limitation, the same strategy (200-day window, fixed
-a priori) was applied to a basket of 20 large-cap US stocks, forming an
-equal-weight portfolio of the trend strategies and of buy-and-hold.
-
-| Quantity | Sharpe | 95% confidence interval |
-|---|---|---|
-| Trend portfolio | 1.10 | [0.41, 1.81] |
-| Buy-and-hold portfolio | 0.99 | [0.32, 1.65] |
-| Difference | 0.11 | [-0.31, 0.55] |
-
-Across the basket the edge shrank to a small +0.11 and remained statistically
-insignificant. A subtle point: the paired difference interval narrowed (roughly
-halved versus the single stock) because diversification cancels idiosyncratic
-noise, but the individual Sharpe intervals barely tightened. The precision of a
-Sharpe ratio is governed by the length of the track record in time, not the
-number of assets.
+The 20 tickers are large, liquid companies selected by hand at the present day. This
+introduces survivorship and selection bias: firms that failed or were delisted over
+2015-2024 are excluded, which flatters any long-biased result. A stronger design
+would use point-in-time index constituents or a rules-based universe declared at the
+sample start. This study should therefore be read as exploratory evidence on a
+surviving large-cap universe, not a general claim about US equities.
 
 ## Conclusion
 
-Neither on Apple alone nor across a 20-stock basket does a moving-average trend
-rule show a statistically significant edge over buy-and-hold after costs. The
-single-stock "win" (20-day window, Sharpe 1.42) was an overfitting artifact; with
-a conventional window chosen a priori and applied across many names, the edge is a
-small +0.11, well within the noise (95% CI [-0.31, 0.55]). This is a deliberately
-honest, rigorously-evaluated null result: a real edge is hard to establish, and
-detecting one this small would require a much longer history.
+On a hand-selected 20-stock basket, over 2015-2024, after 5 bps costs, a 200-day
+trend rule shows **no statistically significant Sharpe advantage over a true
+buy-and-hold** (difference -0.003; 95% CI covers zero for all block lengths). It also
+delivers materially less total wealth and far higher turnover. The apparent
+single-stock "win" in the earlier draft was overfitting; the earlier basket "win" was
+an artifact of a mislabelled rebalanced benchmark and an over-confident IID bootstrap.
+Corrected, the result is a clean, well-supported null.
 
 ## Limitations and next steps
 
-- A single stock, and a test period (COVID, 2022) that happened to favour
-  trend-following.
-- Sensitive to the 5 bps cost assumption; the 20-day rule has high turnover.
-- Establishing a genuine edge would require many assets, a longer history,
-  walk-forward validation, and multiple-testing corrections (e.g. deflated Sharpe).
+- Survivorship/selection bias in the hand-picked universe (see above).
+- Sensitive to the cost assumption; the strategy has high turnover.
+- A full walk-forward with parameter refitting, point-in-time constituents, and a
+  multiple-testing correction (deflated Sharpe) would further harden the conclusion.
 
 ## How to reproduce
 
 ```
-python backtest_check.py     # engine sanity check + benchmark metrics
-python run_strategy.py        # 200-day strategy vs benchmark
-python param_sweep.py         # Sharpe vs window (overfitting)
-python train_test.py          # out-of-sample evaluation
-python uncertainty.py         # bootstrap confidence intervals (single stock)
-python portfolio.py           # 20-stock basket
-python uncertainty_portfolio.py  # bootstrap the basket difference
+pytest -q                        # engine and research invariants (12 tests)
+python run_basket.py             # three portfolios: true BH, rebalanced EW, strategy
+python uncertainty_block.py      # paired moving-block bootstrap of the Sharpe difference
 ```

@@ -16,15 +16,15 @@ In progress. Currently implemented:
 - `empirical/` — a study of the statistical "stylised facts" of real returns
   (fat tails and volatility clustering); see `reports/stylised_facts.md`
 - `models/` — geometric Brownian motion and the Heston stochastic-volatility
-  model (Euler-Maruyama), plus calibration to historical data
+  model (Euler-Maruyama), plus historical parameter estimation
 - `pricing/` — the Black-Scholes formula and Monte Carlo option pricers
   (European, Asian), with variance reduction
-- `backtest/` — a vectorised strategy backtester (no look-ahead, transaction
-  costs, turnover) with Sharpe / drawdown metrics and bootstrap confidence intervals
-- `tests/` — unit tests for returns, pricing, and the models
+- `backtest/` — a holdings-based portfolio backtester (true buy-and-hold,
+  rebalanced, and signal portfolios; no look-ahead; explicit costs and turnover)
+  with a paired moving-block bootstrap for inference
+- `tests/` — unit tests for returns, pricing, models, and portfolio accounting
 
-Planned: market microstructure, and extending the backtest to a basket of assets
-with walk-forward validation.
+Planned: walk-forward with point-in-time constituents; market microstructure.
 
 ## Key results so far
 
@@ -34,28 +34,19 @@ with walk-forward validation.
 - **Pricing:** the Monte Carlo European-call price agrees with Black-Scholes to
   within 0.8%, with error scaling as 1/sqrt(N) (Central Limit Theorem); antithetic
   variates give a ~2x variance reduction.
-- **Modelling:** the Heston model reproduces the empirical stylised facts from
-  first principles. See `reports/heston.md`.
-- **Calibration:** GBM and Heston calibrated to AAPL. Calibrated GBM captures the
-  volatility level but no fat tails; calibrated Heston reproduces the fat tails,
-  while its negative skew is shown to be a discretisation artifact rather than a
-  captured leverage effect (an honest limitation). See `reports/calibration.md`.
-- **Backtesting:** a rigorously-evaluated trend-following study (single stock and a
-  20-stock basket) finds no statistically significant edge over buy-and-hold after
-  costs (basket Sharpe difference +0.11, 95% CI [-0.31, 0.55]); the apparent
-  single-stock win was overfitting. See `reports/strategy_backtest.md`.
-
-## What's inside
-
-- `core/` — data loading and returns
-- `empirical/stylised_facts.py` — distributional and volatility analysis
-- `models/gbm.py`, `models/heston.py`, `models/calibration.py`
-- `pricing/black_scholes.py`, `pricing/monte_carlo.py`
-- scripts: `explore.py`, `simulate_paths.py`, `price_option.py`, `convergence.py`,
-  `variance_reduction.py`, `heston_paths.py`, `heston_stylised_facts.py`,
-  `calibrate.py`, `goodness_of_fit.py`, `validate_heston.py`
-- `reports/` — written findings with figures
-- `tests/` — pytest unit tests
+- **Modelling:** the Heston model reproduces the empirical stylised facts
+  endogenously. See `reports/heston.md`.
+- **Estimation:** GBM and Heston parameters estimated from AAPL returns (a
+  physical-measure, method-of-moments estimate, not risk-neutral option calibration).
+  Estimated GBM captures the volatility level but no fat tails; estimated Heston
+  reproduces the fat tails, while its negative skew is shown to be a discretisation
+  artifact rather than a captured leverage effect. See `reports/calibration.md`.
+- **Backtesting:** a trend-following study on a 20-stock basket, using holdings-based
+  portfolio accounting and a dependence-aware moving-block bootstrap, finds no
+  statistically significant Sharpe advantage over a true buy-and-hold after costs
+  (difference -0.003; 95% CI covers zero). An earlier draft's apparent edge was
+  traced to a mislabelled rebalanced benchmark and an IID bootstrap, and corrected.
+  See `reports/strategy_backtest.md`.
 
 ## Setup
 
@@ -68,9 +59,10 @@ pip install -r requirements.txt
 ## Run
 
 ```
-python -m empirical.stylised_facts   # stylised-facts analysis
+python -m empirical.stylised_facts   # the stylised-facts analysis
 python price_option.py               # Monte Carlo vs Black-Scholes, and an Asian option
-python heston_paths.py               # stochastic-volatility price paths
-python calibrate.py                  # fit GBM and Heston to real data
+python calibrate.py                  # estimate GBM and Heston from data
+python run_basket.py                 # holdings-based portfolios: BH, rebalanced, strategy
+python uncertainty_block.py          # paired moving-block bootstrap of the Sharpe difference
 pytest -q                            # run the tests
 ```
