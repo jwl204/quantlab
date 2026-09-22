@@ -1,0 +1,22 @@
+{
+  "name": "etf",
+  "provider": "yfinance",
+  "adjustment": "auto_adjust=True (dividends and splits)",
+  "tickers": [
+    "XLK",
+    "XLF",
+    "XLE",
+    "XLV",
+    "XLI",
+    "XLP",
+    "XLY",
+    "XLU",
+    "XLB"
+  ],
+  "start": "2015-01-01",
+  "end": "2024-01-01",
+  "rows": 2264,
+  "cols": 9,
+  "retrieved_utc": "2026-09-22T17:59:46.165207+00:00",
+  "sha256": "aa9c9d0ded4ed3210ce4afc58a41f1a84c85c0d776efc5ab89d7b337981ca449"
+}

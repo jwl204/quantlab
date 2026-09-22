@@ -122,6 +122,16 @@ would use point-in-time index constituents or a rules-based universe declared at
 sample start. This study should therefore be read as exploratory evidence on a
 surviving large-cap universe, not a general claim about US equities.
 
+**Robustness universe.** As a bias-free cross-check, the same strategy was run on a
+rules-based universe of 9 SPDR sector ETFs (sectors are not subject to single-name
+delisting). There the strategy Sharpe was 0.702 versus buy-and-hold 0.661 (difference
++0.041; 95% CI [-0.236, +0.317], P(strategy better) 0.61). Notably the sign of the
+(still insignificant) edge flips: on the hand-picked survivors buy-and-hold benefits
+from the exceptional compounding of the selected winners, so trend-following trails; on
+the bias-free sector universe trend-following marginally leads. The conclusion of no
+statistically significant edge holds on both universes, but the point estimate's sign
+depends on the universe -- which is exactly why the selection matters and is disclosed.
+
 ## Conclusion
 
 On a hand-selected 20-stock basket, over 2015-2024, after 5 bps costs, a 200-day
@@ -142,12 +152,14 @@ Corrected, the result is a clean, well-supported null. The null also holds under
 ## How to reproduce
 
 ```
-pytest -q                    # 30 tests incl. leakage, accounting and walk-forward invariants
+python build_snapshot.py     # build the price snapshots (basket + sector ETFs)
+pytest -q                    # 33 tests incl. leakage, accounting and walk-forward invariants
 python run_basket.py         # three portfolios: true BH, rebalanced EW, strategy
 python uncertainty_block.py  # paired moving-block bootstrap (single split)
 python walk_forward.py       # stateful walk-forward with per-fold retuning
 python oos_uncertainty.py    # bootstrap of the stitched out-of-sample difference
 python sensitivity.py        # cost / execution-lag / rebalance sensitivity grids
 python robustness.py         # stationary bootstrap + deflated Sharpe (multiple testing)
+python etf_universe.py       # robustness on a survivorship-bias-free ETF universe
 python run_research.py       # regenerate all headline results + a provenance manifest
 ```

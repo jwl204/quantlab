@@ -93,8 +93,7 @@ every block length. The same null holds under an expanding-window walk-forward t
 re-tunes the window each fold as one continuous portfolio (out-of-sample Sharpe difference -0.017, transition costs charged).
 
 **Conclusion:** no statistically significant Sharpe advantage for trend-following
-over a true buy-and-hold after costs — a clean, dependence-aware null result. A
-limitation: the hand-picked universe carries survivorship bias.
+over a true buy-and-hold after costs — a clean, dependence-aware null result. The result is robust to costs, execution lag, rebalancing and the inference method, and holds on a bias-free sector-ETF universe (though the sign of the tiny, insignificant edge flips there, since survivor buy-and-hold benefits from the winners' compounding).
 
 ## 6. What this project demonstrates
 
