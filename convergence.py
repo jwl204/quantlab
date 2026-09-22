@@ -1,19 +1,16 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from pricing.monte_carlo import mc_european_call
 from pricing.black_scholes import bs_european_call
+from pricing.monte_carlo import mc_european_call
 
-params = dict(s0=100, K=100, r=0.05, sigma=0.20, T=1.0)
+params = {"s0": 100, "K": 100, "r": 0.05, "sigma": 0.20, "T": 1.0}
 bs = bs_european_call(**params)
 
 path_counts = [100, 300, 1000, 3000, 10000, 30000]
 rms_errors = []
 for n in path_counts:
-    errs = [
-        mc_european_call(**params, n_steps=100, n_paths=n, seed=s) - bs
-        for s in range(10)
-    ]
+    errs = [mc_european_call(**params, n_steps=100, n_paths=n, seed=s) - bs for s in range(10)]
     rms_errors.append(np.sqrt(np.mean(np.square(errs))))
 
 plt.loglog(path_counts, rms_errors, "o-", label="RMS Monte Carlo error")

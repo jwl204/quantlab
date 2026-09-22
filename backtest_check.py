@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from core.data import load_prices
-from core.returns import simple_returns
 from backtest.engine import backtest
 from backtest.metrics import performance
+from core.data import load_prices
+from core.returns import simple_returns
 
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = simple_returns(prices)
@@ -22,4 +22,4 @@ print("Final buy-and-hold:   ", (1 + rets).cumprod().iloc[-1])
 
 print("\nBuy-and-hold Apple performance:")
 for name, value in performance(result).items():
-    print("  {:16s}: {:.3f}".format(name, value))
+    print(f"  {name:16s}: {value:.3f}")

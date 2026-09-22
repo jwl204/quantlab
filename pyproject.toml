@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
+dev = ["pytest", "ruff==0.15.20"]
 
 [build-system]
 requires = ["setuptools>=61"]
@@ -24,3 +24,6 @@ packages = ["core", "models", "pricing", "backtest", "empirical"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "C4", "RUF"]

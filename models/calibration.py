@@ -28,4 +28,4 @@ def calibrate_heston(log_rets, window=21, periods_per_year=252):
     aligned_rets = log_rets.loc[vol_change.index]
     rho = np.corrcoef(aligned_rets, vol_change)[0, 1]  # leverage correlation
 
-    return dict(v0=v0, kappa=kappa, theta=theta, xi=xi, rho=rho)
+    return {"v0": v0, "kappa": kappa, "theta": theta, "xi": xi, "rho": rho}

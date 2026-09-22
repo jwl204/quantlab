@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import stats
 from statsmodels.graphics.tsaplots import plot_acf
 
@@ -26,9 +26,7 @@ print("Heston excess kurtosis:", stats.kurtosis(rets))
 print("Heston skewness:       ", stats.skew(rets))
 print("(GBM / normal would give ~0 for both)")
 
-plot_acf(
-    rets**2, lags=40, title="Heston: ACF of squared returns (volatility clustering)"
-)
+plot_acf(rets**2, lags=40, title="Heston: ACF of squared returns (volatility clustering)")
 plt.tight_layout()
 plt.savefig("reports/figures/heston_acf_squared.png", dpi=120)
 plt.show()

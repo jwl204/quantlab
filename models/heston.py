@@ -21,10 +21,6 @@ def simulate_heston(s0, v0, mu, kappa, theta, xi, rho, T, n_steps, n_paths, seed
         dw1 = np.sqrt(dt) * z1
         dw2 = np.sqrt(dt) * (rho * z1 + np.sqrt(1 - rho**2) * z2)
         v_prev = np.maximum(v[:, t - 1], 0.0)
-        S[:, t] = (
-            S[:, t - 1] + mu * S[:, t - 1] * dt + np.sqrt(v_prev) * S[:, t - 1] * dw1
-        )
-        v[:, t] = (
-            v[:, t - 1] + kappa * (theta - v_prev) * dt + xi * np.sqrt(v_prev) * dw2
-        )
+        S[:, t] = S[:, t - 1] + mu * S[:, t - 1] * dt + np.sqrt(v_prev) * S[:, t - 1] * dw1
+        v[:, t] = v[:, t - 1] + kappa * (theta - v_prev) * dt + xi * np.sqrt(v_prev) * dw2
     return S, v

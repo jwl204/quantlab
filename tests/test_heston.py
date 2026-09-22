@@ -5,7 +5,7 @@ from models.heston import simulate_heston
 
 
 def test_variance_reverts_to_theta():
-    S, v = simulate_heston(
+    _S, v = simulate_heston(
         s0=100,
         v0=0.04,
         mu=0.0,
@@ -23,7 +23,7 @@ def test_variance_reverts_to_theta():
 
 
 def test_heston_returns_have_fat_tails():
-    S, v = simulate_heston(
+    S, _v = simulate_heston(
         s0=100,
         v0=0.04,
         mu=0.0,

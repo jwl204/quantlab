@@ -1,11 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import stats
 
 from core.data import load_prices
 from core.returns import log_returns
-from models.gbm import simulate_gbm
 from models.calibration import calibrate_gbm
+from models.gbm import simulate_gbm
 
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = log_returns(prices)

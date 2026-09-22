@@ -1,9 +1,9 @@
 import numpy as np
 
-from core.data import load_prices
-from core.returns import simple_returns
 from backtest.engine import backtest
 from backtest.strategies import ma_trend_signal
+from core.data import load_prices
+from core.returns import simple_returns
 
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = simple_returns(prices)
@@ -24,11 +24,7 @@ def boot_ci(r, n=5000, seed=0):
     return np.percentile(stats, [2.5, 97.5])
 
 
-print(
-    "Strategy  Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(
-        sharpe(strat_r), *boot_ci(strat_r)
-    )
-)
+print("Strategy  Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(sharpe(strat_r), *boot_ci(strat_r)))
 print(
     "Benchmark Sharpe {:.2f}  95% CI [{:.2f}, {:.2f}]".format(
         sharpe(bench_r), *boot_ci(bench_r, seed=1)
@@ -42,6 +38,4 @@ for _ in range(5000):
     take = rng.choice(idx, len(idx), replace=True)
     diffs.append(sharpe(strat_r[take]) - sharpe(bench_r[take]))
 lo, hi = np.percentile(diffs, [2.5, 97.5])
-print(
-    "Sharpe difference {:.2f}  95% CI [{:.2f}, {:.2f}]".format(np.mean(diffs), lo, hi)
-)
+print(f"Sharpe difference {np.mean(diffs):.2f}  95% CI [{lo:.2f}, {hi:.2f}]")

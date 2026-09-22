@@ -13,9 +13,9 @@ def performance(result, periods_per_year=252):
     turnover = result["position"].diff().abs().mean() * periods_per_year
     total_return = equity.iloc[-1] - 1.0
 
-    return dict(
-        sharpe=sharpe,
-        max_drawdown=max_dd,
-        annual_turnover=turnover,
-        total_return=total_return,
-    )
+    return {
+        "sharpe": sharpe,
+        "max_drawdown": max_dd,
+        "annual_turnover": turnover,
+        "total_return": total_return,
+    }

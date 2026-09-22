@@ -1,11 +1,11 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
-from core.data import load_prices
-from core.returns import simple_returns
 from backtest.engine import backtest
 from backtest.metrics import performance
 from backtest.strategies import ma_trend_signal
+from core.data import load_prices
+from core.returns import simple_returns
 
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = simple_returns(prices)
@@ -18,7 +18,7 @@ for w in windows:
     sig = ma_trend_signal(prices, w).reindex(rets.index).fillna(0.0)
     s = performance(backtest(rets, sig, cost_bps=5.0))["sharpe"]
     sharpes.append(s)
-    print("window {:4d}: Sharpe {:.3f}".format(w, s))
+    print(f"window {w:4d}: Sharpe {s:.3f}")
 
 plt.plot(windows, sharpes, "o-", label="Trend strategy")
 plt.axhline(bench, color="red", linestyle="--", label="Buy-and-hold")

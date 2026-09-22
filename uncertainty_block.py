@@ -9,18 +9,12 @@ common = strat.index.intersection(bench.index)
 strat, bench = strat.loc[common].to_numpy(), bench.loc[common].to_numpy()
 
 print(
-    "Strategy Sharpe {:.3f} | buy-and-hold Sharpe {:.3f} | diff {:+.3f}".format(
-        sharpe(strat), sharpe(bench), sharpe(strat) - sharpe(bench)
-    )
+    f"Strategy Sharpe {sharpe(strat):.3f} | buy-and-hold Sharpe {sharpe(bench):.3f} | diff {sharpe(strat) - sharpe(bench):+.3f}"
 )
-print(
-    "\nPaired moving-block bootstrap of the Sharpe difference (block-length sensitivity):"
-)
+print("\nPaired moving-block bootstrap of the Sharpe difference (block-length sensitivity):")
 for block in [5, 10, 20, 40]:
     d = block_bootstrap_sharpe_diff(strat, bench, block=block, n=5000, seed=0)
     lo, hi = np.percentile(d, [2.5, 97.5])
     print(
-        "  block {:3d}d:  diff {:+.3f}   95% CI [{:+.3f}, {:+.3f}]   P(diff>0) = {:.2f}".format(
-            block, np.median(d), lo, hi, (d > 0).mean()
-        )
+        f"  block {block:3d}d:  diff {np.median(d):+.3f}   95% CI [{lo:+.3f}, {hi:+.3f}]   P(diff>0) = {(d > 0).mean():.2f}"
     )

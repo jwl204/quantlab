@@ -14,6 +14,4 @@ def backtest(returns, signal, cost_bps=0.0):
     cost = turnover * (cost_bps / 10000.0)
     strat_ret = position * returns - cost
     equity = (1.0 + strat_ret).cumprod()
-    return pd.DataFrame(
-        {"position": position, "strategy_return": strat_ret, "equity": equity}
-    )
+    return pd.DataFrame({"position": position, "strategy_return": strat_ret, "equity": equity})

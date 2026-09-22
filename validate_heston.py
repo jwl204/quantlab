@@ -1,11 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import stats
 
 from core.data import load_prices
 from core.returns import log_returns
-from models.heston import simulate_heston
 from models.calibration import calibrate_gbm, calibrate_heston
+from models.heston import simulate_heston
 
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = log_returns(prices)
@@ -34,9 +34,7 @@ print("Real AAPL   skewness:       ", stats.skew(rets))
 print("Heston      skewness:       ", stats.skew(heston_rets))
 
 plt.hist(rets, bins=100, density=True, alpha=0.5, label="Real AAPL returns")
-plt.hist(
-    heston_rets, bins=200, density=True, alpha=0.5, label="Calibrated Heston returns"
-)
+plt.hist(heston_rets, bins=200, density=True, alpha=0.5, label="Calibrated Heston returns")
 plt.xlim(-0.15, 0.15)
 plt.title("Real vs calibrated-Heston return distributions")
 plt.xlabel("Daily log return")

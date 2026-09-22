@@ -1,9 +1,9 @@
 import numpy as np
 
-from core.data import load_prices
-from core.returns import simple_returns
 from backtest.engine import backtest
 from backtest.strategies import ma_trend_signal
+from core.data import load_prices
+from core.returns import simple_returns
 
 prices = load_prices("AAPL", "2015-01-01", "2024-01-01")
 rets = simple_returns(prices)
@@ -25,15 +25,9 @@ best = max(train_sharpes, key=train_sharpes.get)
 print(
     "Chosen on TRAIN (2015-2019):  window",
     best,
-    "  Sharpe {:.3f}".format(train_sharpes[best]),
+    f"  Sharpe {train_sharpes[best]:.3f}",
 )
-print(
-    "Same window on TEST (2020-23): Sharpe {:.3f}".format(strat_sharpe(best, test_mask))
-)
+print(f"Same window on TEST (2020-23): Sharpe {strat_sharpe(best, test_mask):.3f}")
 
 bench = rets[test_mask]
-print(
-    "Buy-and-hold on TEST:          Sharpe {:.3f}".format(
-        bench.mean() / bench.std() * np.sqrt(252)
-    )
-)
+print(f"Buy-and-hold on TEST:          Sharpe {bench.mean() / bench.std() * np.sqrt(252):.3f}")
