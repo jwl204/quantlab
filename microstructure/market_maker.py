@@ -5,9 +5,7 @@ The quoter follows Avellaneda & Stoikov (2008). Around the mid it forms a
 lowers both quotes so the maker is keener to sell, a short inventory raises
 them. The total quoted spread widens with risk aversion, volatility and time
 remaining, and narrows when the book is deep (large ``k``). The maker earns the
-half-spread on round trips but carries inventory risk between them; with
-non-zero ``latency`` its quotes are stale, so informed flow picks them off just
-before the mid moves -- classic adverse selection.
+half-spread on round trips but carries inventory risk between them.
 
 ``simulate_market_making`` runs the quoter as the only strategic liquidity in a
 book that also holds background liquidity from noise traders, with Poisson
@@ -17,6 +15,14 @@ result into spread capture (edge earned versus the mid at each fill) and
 inventory carry (mark-to-market of the held position as the mid drifts). The two
 terms reconcile to total P&L by construction; ``tests/test_market_maker.py``
 asserts it.
+
+The attribution isolates two *distinct* frictions, which are separate parameters:
+
+* ``latency`` -- the maker quotes off a stale mid. Even against uninformed (random)
+  flow this loses money, and the loss lands in *spread capture*: a stale-quote cost.
+* ``toxicity`` -- a fraction of orders are informed, trading in the direction of the
+  next mid move. This is genuine adverse selection and drains *inventory carry*: the
+  maker is filled on the wrong side just before the price moves.
 """
 
 from __future__ import annotations
@@ -85,13 +91,19 @@ _BID_ID = 1
 _ASK_ID = 2
 
 
-def clip_to_book(bid, ask, bg_bid, bg_ask, tick):
+def clip_to_book(bid, ask, bg_bid, bg_ask, tick) -> tuple[float, float] | None:
     """Clip maker quotes to a tick inside the opposite background quote.
 
     Prevents the maker resting a bid at/above the best ask or an ask at/below the
     best bid (a crossed book), which the passive ``add_limit`` would not match.
+    Returns ``None`` when no valid two-sided quote remains (the clipped bid is
+    non-positive or would still cross the ask), so the caller simply skips quoting.
     """
-    return min(bid, bg_ask - tick), max(ask, bg_bid + tick)
+    bid = min(bid, bg_ask - tick)
+    ask = max(ask, bg_bid + tick)
+    if bid <= 0.0 or bid >= ask:
+        return None
+    return bid, ask
 
 
 def simulate_market_making(
@@ -159,8 +171,9 @@ def simulate_market_making(
         book.add_limit(Order(bg_id + 1, "sell", bg_ask, 100.0))
         bg_id += 2
         # clip quotes to a tick inside the opposite background quote (no crossed book)
-        bid_px, ask_px = clip_to_book(bid_px, ask_px, bg_bid, bg_ask, tick)
-        if 0.0 < bid_px < ask_px:
+        quotes = clip_to_book(bid_px, ask_px, bg_bid, bg_ask, tick)
+        if quotes is not None:
+            bid_px, ask_px = quotes
             book.add_limit(Order(_BID_ID, "buy", round(bid_px, 4), order_size))
             book.add_limit(Order(_ASK_ID, "sell", round(ask_px, 4), order_size))
 

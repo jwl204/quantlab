@@ -83,7 +83,11 @@ def git_commit():
 snap_manifest = json.loads((Path("snapshots") / f"{CONFIG['snapshot']}_manifest.json").read_text())
 manifest = {
     "generated_utc": datetime.now(UTC).isoformat(timespec="seconds"),
-    "git_commit": git_commit(),
+    # The commit whose code produced these results. It is the commit that was HEAD
+    # when the script ran, NOT the commit that stores this file -- committing the
+    # manifest necessarily advances HEAD past it, so the two can never be identical.
+    # Regenerate only when the code or data that affects the results changes.
+    "results_source_commit": git_commit(),
     "python": sys.version.split()[0],
     "platform": platform.platform(),
     "packages": {m.__name__: m.__version__ for m in [np, pd, scipy, statsmodels, matplotlib]},

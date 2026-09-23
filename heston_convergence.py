@@ -19,6 +19,8 @@ Run:  python heston_convergence.py
 
 from __future__ import annotations
 
+import argparse
+
 import numpy as np
 
 from models.heston import feller_ratio
@@ -28,7 +30,12 @@ PARAMS = {"s0": 100.0, "v0": 0.04, "mu": 0.05, "kappa": 2.0, "theta": 0.04, "xi"
 K, T, R = 100.0, 1.0, 0.05  # risk-neutral pricing: mu = r
 N_PATHS = 40000
 N_FINE = 1000
-GRIDS = [25, 50, 100, 125, 250, 500, 1000]  # all divide N_FINE
+BASE_GRIDS = [25, 50, 100, 125, 250, 500, 1000, 2000]
+
+
+def grids_for(n_fine):
+    """Step counts that evenly divide the finest grid (so increments nest exactly)."""
+    return sorted({g for g in BASE_GRIDS if g <= n_fine and n_fine % g == 0} | {n_fine})
 
 
 def build_fine_increments(n_fine, n_paths, rho, dt_fine, seed):
@@ -77,10 +84,14 @@ def discounted_payoff(terminal):
     return np.exp(-R * T) * np.maximum(terminal - K, 0.0)
 
 
-def main() -> None:
+def main(n_paths: int = N_PATHS, n_fine: int = N_FINE) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")  # headless: only ever saves a figure, never displays
     import matplotlib.pyplot as plt
 
-    dt_fine = T / N_FINE
+    grids = grids_for(n_fine)
+    dt_fine = T / n_fine
     fr = feller_ratio(PARAMS["kappa"], PARAMS["theta"], PARAMS["xi"])
     print(
         f"Feller ratio 2*kappa*theta/xi^2 = {fr:.3f} "
@@ -100,7 +111,8 @@ def main() -> None:
     )
     print(f"Semi-analytic benchmark price: {exact:.4f}\n")
 
-    dw1_fine, dw2_fine = build_fine_increments(N_FINE, N_PATHS, PARAMS["rho"], dt_fine, seed=12345)
+    print(f"(n_paths={n_paths}, n_fine={n_fine})\n")
+    dw1_fine, dw2_fine = build_fine_increments(n_fine, n_paths, PARAMS["rho"], dt_fine, seed=12345)
 
     disc_abs = {}
     for scheme in ["euler", "log-euler"]:
@@ -112,30 +124,30 @@ def main() -> None:
             f"{'disc_vs_finest':>15} {'95% CI':>17} {'MC_SE':>7}"
         )
         disc_abs[scheme] = []
-        for n in GRIDS:
+        for n in grids:
             pay = discounted_payoff(
                 simulate_terminal(coarsen(dw1_fine, n), coarsen(dw2_fine, n), scheme, PARAMS, T)
             )
             price = pay.mean()
-            mc_se = pay.std(ddof=1) / np.sqrt(N_PATHS)  # unpaired MC error
+            mc_se = pay.std(ddof=1) / np.sqrt(n_paths)  # unpaired MC error
             diff = pay - pay_fine  # common random numbers
             disc = diff.mean()
-            disc_se = diff.std(ddof=1) / np.sqrt(N_PATHS)  # tiny, thanks to CRN
+            disc_se = diff.std(ddof=1) / np.sqrt(n_paths)  # tiny, thanks to CRN
             ci = 1.96 * disc_se
-            disc_abs[scheme].append(abs(disc) if n != N_FINE else np.nan)
+            disc_abs[scheme].append(abs(disc) if n != n_fine else np.nan)
             print(
                 f"  {n:>5d} {price:8.4f} {price - exact:+13.4f} "
                 f"{disc:+15.4f} {f'+/-{ci:.4f}':>17} {mc_se:7.4f}"
             )
         fine_bias = pay_fine.mean() - exact
-        fine_se = pay_fine.std(ddof=1) / np.sqrt(N_PATHS)
+        fine_se = pay_fine.std(ddof=1) / np.sqrt(n_paths)
         print(
-            f"  finest ({N_FINE}) bias vs exact: {fine_bias:+.4f} +/- {1.96 * fine_se:.4f} "
+            f"  finest ({n_fine}) bias vs exact: {fine_bias:+.4f} +/- {1.96 * fine_se:.4f} "
             f"(MC 95% CI)\n"
         )
 
     # --- plot: |discretisation error vs finest| with CRN, both schemes ---
-    grids_plot = [n for n in GRIDS if n != N_FINE]
+    grids_plot = [n for n in grids if n != n_fine]
     for scheme in ["euler", "log-euler"]:
         y = disc_abs[scheme][: len(grids_plot)]
         plt.loglog(grids_plot, y, "o-", label=scheme)
@@ -155,7 +167,7 @@ def main() -> None:
     # identifying the bulk of it as a discretisation artifact.
     p0 = dict(PARAMS, rho=0.0)
     print("\nDaily-return skew at rho=0 by scheme and intraday resolution (common random numbers):")
-    base_days, n_paths_sk = 252, 4000
+    base_days, n_paths_sk = 252, min(n_paths, 4000)
     for mult in (1, 2, 4, 8):
         n_steps = base_days * mult
         dw1, dw2 = build_fine_increments(n_steps, n_paths_sk, 0.0, T / n_steps, seed=7)
@@ -194,4 +206,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description="Heston discretisation-error study")
+    ap.add_argument("--n-paths", type=int, default=N_PATHS, help="Monte Carlo paths")
+    ap.add_argument("--n-fine", type=int, default=N_FINE, help="finest grid step count")
+    args = ap.parse_args()
+    main(n_paths=args.n_paths, n_fine=args.n_fine)

@@ -31,7 +31,7 @@ In progress. Currently implemented:
   (toxic) order flow and an exact spread-vs-inventory P&L attribution; see
   `reports/microstructure.md`
 - `tests/` — unit tests for returns, pricing, models, the semi-analytic Heston
-  pricer, portfolio accounting, the order book, and the market maker (52 tests)
+  pricer, portfolio accounting, the order book, and the market maker (54 tests)
 
 An expanding-window walk-forward is implemented; using point-in-time index
 constituents (rather than the current fixed universe) is the main remaining
@@ -87,5 +87,5 @@ python walk_forward.py               # expanding-window walk-forward validation
 python etf_universe.py               # robustness on a fixed sector-ETF universe
 python run_microstructure.py         # market-making P&L attribution: latency and toxic flow
 python run_research.py               # regenerate the core headline metrics + provenance manifest
-pytest -q                            # run the tests (52)
+pytest -q                            # run the tests (54)
 ```

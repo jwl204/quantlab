@@ -38,13 +38,20 @@ def test_toxicity_out_of_range_raises():
 
 
 def test_clip_to_book_prevents_crossing():
-    # a bid above the background ask is pulled a tick below it; an ask below the
-    # background bid is pushed a tick above it; valid quotes are left untouched
-    bid, ask = clip_to_book(bid=101.0, ask=99.0, bg_bid=99.9, bg_ask=100.1, tick=0.01)
-    assert bid == pytest.approx(100.09) and ask == pytest.approx(99.91)
-    assert bid < 100.1 and ask > 99.9
-    bid2, ask2 = clip_to_book(99.95, 100.05, 99.9, 100.1, 0.01)
-    assert bid2 == pytest.approx(99.95) and ask2 == pytest.approx(100.05)
+    # a bid above the background ask is pulled a tick below it, but as long as a
+    # valid two-sided quote remains it is returned
+    bid, ask = clip_to_book(bid=100.2, ask=100.5, bg_bid=99.9, bg_ask=100.1, tick=0.01)
+    assert bid == pytest.approx(100.09) and ask == pytest.approx(100.5)
+    assert bid < 100.1  # strictly inside the background ask
+
+
+def test_clip_to_book_leaves_valid_quotes_untouched():
+    assert clip_to_book(99.95, 100.05, 99.9, 100.1, 0.01) == pytest.approx((99.95, 100.05))
+
+
+def test_clip_to_book_returns_none_when_no_valid_quote():
+    # extremely stale quotes that would cross even after clipping -> no quote
+    assert clip_to_book(bid=101.0, ask=99.0, bg_bid=99.9, bg_ask=100.1, tick=0.01) is None
 
 
 def test_pnl_attribution_reconciles():

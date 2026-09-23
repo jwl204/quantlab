@@ -161,7 +161,7 @@ Corrected, the result is a clean, well-supported null. The null also holds under
 
 ```
 python build_snapshot.py     # build the price snapshots (basket + sector ETFs)
-pytest -q                    # 52 tests incl. leakage, accounting and walk-forward invariants
+pytest -q                    # 54 tests incl. leakage, accounting and walk-forward invariants
 python run_basket.py         # three portfolios: true BH, rebalanced EW, strategy
 python uncertainty_block.py  # paired moving-block bootstrap (single split)
 python walk_forward.py       # stateful walk-forward with per-fold retuning

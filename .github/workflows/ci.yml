@@ -19,6 +19,7 @@ jobs:
       - run: pytest -q --cov=core --cov=models --cov=pricing --cov=backtest --cov=microstructure
       - run: python run_research.py       # offline reproduction from the committed snapshot
       - run: python run_microstructure.py  # offline market-making experiment (no market data)
+      - run: python heston_convergence.py --n-paths 1000 --n-fine 100  # convergence smoke test
 
   types:
     runs-on: ubuntu-latest
