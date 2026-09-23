@@ -64,8 +64,12 @@ def simulate_terminal(dw1, dw2, scheme, params, T):
             x = x + (params["mu"] - 0.5 * v_prev) * dt + vol * dw1[:, t]
         else:
             s = s + params["mu"] * s * dt + vol * s * dw1[:, t]
-        v = np.maximum(v_prev + params["kappa"] * (params["theta"] - v_prev) * dt
-                       + params["xi"] * vol * dw2[:, t], 0.0)
+        v = np.maximum(
+            v_prev
+            + params["kappa"] * (params["theta"] - v_prev) * dt
+            + params["xi"] * vol * dw2[:, t],
+            0.0,
+        )
     return np.exp(x) if scheme == "log-euler" else np.maximum(s, 0.0)
 
 
@@ -78,11 +82,22 @@ def main() -> None:
 
     dt_fine = T / N_FINE
     fr = feller_ratio(PARAMS["kappa"], PARAMS["theta"], PARAMS["xi"])
-    print(f"Feller ratio 2*kappa*theta/xi^2 = {fr:.3f} "
-          f"({'satisfied' if fr >= 1 else 'violated: truncation active'})")
+    print(
+        f"Feller ratio 2*kappa*theta/xi^2 = {fr:.3f} "
+        f"({'satisfied' if fr >= 1 else 'violated: truncation active'})"
+    )
 
-    exact = heston_call_price(PARAMS["s0"], K, PARAMS["v0"], R, T,
-                              PARAMS["kappa"], PARAMS["theta"], PARAMS["xi"], PARAMS["rho"])
+    exact = heston_call_price(
+        PARAMS["s0"],
+        K,
+        PARAMS["v0"],
+        R,
+        T,
+        PARAMS["kappa"],
+        PARAMS["theta"],
+        PARAMS["xi"],
+        PARAMS["rho"],
+    )
     print(f"Semi-analytic benchmark price: {exact:.4f}\n")
 
     dw1_fine, dw2_fine = build_fine_increments(N_FINE, N_PATHS, PARAMS["rho"], dt_fine, seed=12345)
@@ -92,26 +107,32 @@ def main() -> None:
         # finest-grid payoffs (shared path) anchor the paired discretisation error
         pay_fine = discounted_payoff(simulate_terminal(dw1_fine, dw2_fine, scheme, PARAMS, T))
         print(f"{scheme} scheme:")
-        print(f"  {'steps':>5} {'price':>8} {'bias_vs_exact':>13} "
-              f"{'disc_vs_finest':>15} {'95% CI':>17} {'MC_SE':>7}")
+        print(
+            f"  {'steps':>5} {'price':>8} {'bias_vs_exact':>13} "
+            f"{'disc_vs_finest':>15} {'95% CI':>17} {'MC_SE':>7}"
+        )
         disc_abs[scheme] = []
         for n in GRIDS:
             pay = discounted_payoff(
                 simulate_terminal(coarsen(dw1_fine, n), coarsen(dw2_fine, n), scheme, PARAMS, T)
             )
             price = pay.mean()
-            mc_se = pay.std(ddof=1) / np.sqrt(N_PATHS)          # unpaired MC error
-            diff = pay - pay_fine                                 # common random numbers
+            mc_se = pay.std(ddof=1) / np.sqrt(N_PATHS)  # unpaired MC error
+            diff = pay - pay_fine  # common random numbers
             disc = diff.mean()
-            disc_se = diff.std(ddof=1) / np.sqrt(N_PATHS)         # tiny, thanks to CRN
+            disc_se = diff.std(ddof=1) / np.sqrt(N_PATHS)  # tiny, thanks to CRN
             ci = 1.96 * disc_se
             disc_abs[scheme].append(abs(disc) if n != N_FINE else np.nan)
-            print(f"  {n:>5d} {price:8.4f} {price - exact:+13.4f} "
-                  f"{disc:+15.4f} {f'+/-{ci:.4f}':>17} {mc_se:7.4f}")
+            print(
+                f"  {n:>5d} {price:8.4f} {price - exact:+13.4f} "
+                f"{disc:+15.4f} {f'+/-{ci:.4f}':>17} {mc_se:7.4f}"
+            )
         fine_bias = pay_fine.mean() - exact
         fine_se = pay_fine.std(ddof=1) / np.sqrt(N_PATHS)
-        print(f"  finest ({N_FINE}) bias vs exact: {fine_bias:+.4f} +/- {1.96 * fine_se:.4f} "
-              f"(MC 95% CI)\n")
+        print(
+            f"  finest ({N_FINE}) bias vs exact: {fine_bias:+.4f} +/- {1.96 * fine_se:.4f} "
+            f"(MC 95% CI)\n"
+        )
 
     # --- plot: |discretisation error vs finest| with CRN, both schemes ---
     grids_plot = [n for n in GRIDS if n != N_FINE]
@@ -133,8 +154,7 @@ def main() -> None:
     # coarse steps and converges toward the log-Euler value as the step shrinks,
     # identifying the bulk of it as a discretisation artifact.
     p0 = dict(PARAMS, rho=0.0)
-    print("\nDaily-return skew at rho=0 by scheme and intraday resolution "
-          "(common random numbers):")
+    print("\nDaily-return skew at rho=0 by scheme and intraday resolution (common random numbers):")
     base_days, n_paths_sk = 252, 4000
     for mult in (1, 2, 4, 8):
         n_steps = base_days * mult
@@ -156,8 +176,10 @@ def main() -> None:
                 else:
                     s = s + p0["mu"] * s * dt + vol * s * dw1[:, t]
                     cur = np.maximum(s, 0.0)
-                v = np.maximum(v_prev + p0["kappa"] * (p0["theta"] - v_prev) * dt
-                               + p0["xi"] * vol * dw2[:, t], 0.0)
+                v = np.maximum(
+                    v_prev + p0["kappa"] * (p0["theta"] - v_prev) * dt + p0["xi"] * vol * dw2[:, t],
+                    0.0,
+                )
                 if (t + 1) % mult == 0:
                     daily.append(cur)
             prices = np.stack(daily, axis=1)
@@ -166,8 +188,9 @@ def main() -> None:
             m = rets.mean()
             skew = np.mean((rets - m) ** 3) / rets.std() ** 3
             row.append(skew)
-        print(f"  {mult}x/day ({n_steps:>4} steps/yr): "
-              f"euler {row[0]:+.3f}   log-euler {row[1]:+.3f}")
+        print(
+            f"  {mult}x/day ({n_steps:>4} steps/yr): euler {row[0]:+.3f}   log-euler {row[1]:+.3f}"
+        )
 
 
 if __name__ == "__main__":
