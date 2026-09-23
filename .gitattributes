@@ -1,1 +1,6 @@
 * text=auto eol=lf
+
+# Checksummed data snapshots are immutable byte-for-byte artifacts: never let
+# git rewrite their line endings, or the SHA-256 in the manifest won't match on
+# other platforms (e.g. a Linux CI runner checking out a file created on Windows).
+snapshots/** -text
