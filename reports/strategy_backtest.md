@@ -69,9 +69,11 @@ one-day block) understated the uncertainty.
 A single train/test split is fragile, so the strategy was also evaluated with a
 stateful expanding-window walk-forward: one continuous portfolio is carried across
 four sequential out-of-sample folds, and in each fold the moving-average window is
-re-selected (from 50-250 days) using only prior data. Because a single live portfolio
-persists across folds, the transition trade and its cost are charged whenever the
-selected window changes.
+re-selected (from 50-250 days) using only prior data. A single live portfolio
+persists across folds; when a fold selects a new window, that model becomes active
+at the **next scheduled monthly rebalance**, where the resulting transition trade
+and its cost are charged. The portfolio trades only on month-ends, not on the fold
+boundary itself.
 
 | Test period | Selected window | Strategy Sharpe | Buy-and-hold Sharpe | Difference |
 |---|---|---|---|---|
@@ -122,15 +124,19 @@ would use point-in-time index constituents or a rules-based universe declared at
 sample start. This study should therefore be read as exploratory evidence on a
 surviving large-cap universe, not a general claim about US equities.
 
-**Robustness universe.** As a bias-free cross-check, the same strategy was run on a
+**Robustness universe.** As a cross-check on a universe that substantially reduces
+single-stock survivorship and selection bias, the same strategy was run on a
 rules-based universe of 9 SPDR sector ETFs (sectors are not subject to single-name
-delisting). There the strategy Sharpe was 0.702 versus buy-and-hold 0.661 (difference
-+0.041; 95% CI [-0.236, +0.317], P(strategy better) 0.61). Notably the sign of the
-(still insignificant) edge flips: on the hand-picked survivors buy-and-hold benefits
-from the exceptional compounding of the selected winners, so trend-following trails; on
-the bias-free sector universe trend-following marginally leads. The conclusion of no
-statistically significant edge holds on both universes, but the point estimate's sign
-depends on the universe -- which is exactly why the selection matters and is disclosed.
+delisting). This is not a complete point-in-time investable universe -- it is still a
+retrospectively chosen set of funds that existed over the sample -- but it removes the
+single-name survivorship of the hand-picked basket. There the strategy Sharpe was
+0.702 versus buy-and-hold 0.661 (difference +0.041; 95% CI [-0.236, +0.317],
+P(strategy better) 0.61). Notably the sign of the (still insignificant) edge flips: on
+the hand-picked survivors buy-and-hold benefits from the exceptional compounding of the
+selected winners, so trend-following trails; on the sector universe trend-following
+marginally leads. The conclusion of no statistically significant edge holds on both
+universes, but the point estimate's sign depends on the universe -- which is exactly
+why the selection matters and is disclosed.
 
 ## Conclusion
 
@@ -146,20 +152,22 @@ Corrected, the result is a clean, well-supported null. The null also holds under
 
 - Survivorship/selection bias in the hand-picked universe (see above).
 - Sensitive to the cost assumption; the strategy has high turnover.
-- A full walk-forward with parameter refitting, point-in-time constituents, and a
-  multiple-testing correction (deflated Sharpe) would further harden the conclusion.
+- Walk-forward with per-fold parameter refitting and a multiple-testing correction
+  (deflated Sharpe) are both implemented (see above). The main remaining extension
+  is **point-in-time index constituents** — a survivorship-free, as-of-date
+  membership list — rather than the current fixed universe.
 
 ## How to reproduce
 
 ```
 python build_snapshot.py     # build the price snapshots (basket + sector ETFs)
-pytest -q                    # 33 tests incl. leakage, accounting and walk-forward invariants
+pytest -q                    # 52 tests incl. leakage, accounting and walk-forward invariants
 python run_basket.py         # three portfolios: true BH, rebalanced EW, strategy
 python uncertainty_block.py  # paired moving-block bootstrap (single split)
 python walk_forward.py       # stateful walk-forward with per-fold retuning
 python oos_uncertainty.py    # bootstrap of the stitched out-of-sample difference
 python sensitivity.py        # cost / execution-lag / rebalance sensitivity grids
 python robustness.py         # stationary bootstrap + deflated Sharpe (multiple testing)
-python etf_universe.py       # robustness on a survivorship-bias-free ETF universe
-python run_research.py       # regenerate all headline results + a provenance manifest
+python etf_universe.py       # robustness on a fixed sector-ETF universe
+python run_research.py       # regenerate the core headline metrics + a provenance manifest
 ```

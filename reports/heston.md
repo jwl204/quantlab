@@ -22,8 +22,10 @@ dv = kappa*(theta - v) dt + xi*sqrt(v) dW2,    corr(dW1, dW2) = rho
 - **rho** — the correlation between price and variance shocks; negative rho gives
   the leverage effect (volatility rises when prices fall).
 
-Simulated with Euler-Maruyama using full truncation (the variance is floored at
-zero, since variance cannot be negative).
+Simulated with full truncation (the variance is floored at zero, since variance
+cannot be negative). Two update schemes are provided — an arithmetic Euler price
+update and a log-price (log-Euler) update; the latter keeps prices positive and
+removes an arithmetic-scheme skew artifact, as the convergence study below shows.
 
 ## Stochastic volatility in action
 
@@ -55,20 +57,41 @@ meet in the middle.
 ## Numerical scheme and convergence
 
 Two discretisation schemes are provided: an arithmetic Euler update (educational) and
-a log-price Euler update (`scheme="log-euler"`). A convergence study prices a European
-call under both across time-step grids (25-1000) with common random numbers, reporting
-price, Monte Carlo standard error, bias against a fine-grid reference, runtime, and the
-truncation frequency.
+a log-price Euler update (`scheme="log-euler"`). The convergence study is built to
+separate **weak (discretisation) error** from **Monte Carlo sampling error**, which an
+earlier version conflated:
 
-![Heston discretisation bias vs steps](figures/heston_convergence.png)
+- The benchmark is the **semi-analytic Heston price** (`pricing/heston_analytic.py`),
+  computed from the characteristic function by Gauss-Legendre quadrature. It carries no
+  Monte Carlo error. For the study parameters the exact price is **10.1546**; the pricer
+  is validated against Black-Scholes in the zero-vol-of-vol limit and by put-call parity.
+- Every time-step grid is driven by the **same Brownian path**: increments are generated
+  once on the finest grid and summed into the coarser grids (nested common random
+  numbers). Each coarse grid's discretisation error is then measured as the *paired*
+  difference against the finest grid, whose standard error is small because the shared
+  randomness cancels.
 
-Findings: the Feller ratio is 0.640 (violated), so variance truncation is active,
-falling from 4.7% of steps at 25 steps to 0.4% at 1000. Both schemes converge to the
-reference and give near-identical option prices. Their real difference is in the return
-distribution: with rho = 0 the true skew is zero, but the arithmetic scheme fabricates
-a skew of -0.178, which the log-Euler scheme halves to -0.086 while guaranteeing
-positive prices. The residual reflects the violated Feller condition; a higher-order
-scheme (e.g. Andersen quadratic-exponential) would reduce it further.
+![Heston discretisation error vs steps](figures/heston_convergence.png)
+
+Findings: the Feller ratio is 0.640 (violated), so variance truncation is active. With
+common random numbers the discretisation error is now **monotone in the step count** and
+its confidence interval is far tighter than the ordinary Monte Carlo standard error of
+the price — for example the arithmetic scheme's error against the finest grid falls from
+about +0.13 at 25 steps to within noise by 500 steps, with a 95% interval an order of
+magnitude below the unpaired MC error. (This separation matters: judged by raw price
+minus exact benchmark alone, a coarse grid can look *better* than a fine one purely
+because opposite-sign discretisation error partly cancels that draw's MC offset — the
+paired column removes that illusion.) Both schemes converge to the semi-analytic price.
+
+The schemes differ most in the return distribution. At rho = 0 the true finite-horizon
+skew is **small but not exactly zero** — the -1/2 int v dt drift acts on a right-skewed
+integrated variance, so uncorrelated shocks still leave mild asymmetry. The point is
+that the arithmetic scheme *inflates* it: at one step per day it reports a daily-return
+skew near -0.11, which shrinks toward the log-Euler value (about -0.02) and toward zero
+as the step is refined (roughly -0.11, -0.07, -0.05, -0.01 at 1x, 2x, 4x, 8x per day).
+Most of the arithmetic scheme's skew is therefore a discretisation artifact, not an
+economic effect; the log-Euler scheme also guarantees positive prices. A higher-order
+scheme (e.g. Andersen quadratic-exponential) would reduce the residual further.
 
 ## Next
 

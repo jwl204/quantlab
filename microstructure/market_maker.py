@@ -85,6 +85,15 @@ _BID_ID = 1
 _ASK_ID = 2
 
 
+def clip_to_book(bid, ask, bg_bid, bg_ask, tick):
+    """Clip maker quotes to a tick inside the opposite background quote.
+
+    Prevents the maker resting a bid at/above the best ask or an ask at/below the
+    best bid (a crossed book), which the passive ``add_limit`` would not match.
+    """
+    return min(bid, bg_ask - tick), max(ask, bg_bid + tick)
+
+
 def simulate_market_making(
     *,
     quoter: AvellanedaStoikovQuoter,
@@ -95,6 +104,8 @@ def simulate_market_making(
     background_half_spread: float = 0.10,
     arrival_rate: float = 1.0,
     latency: int = 0,
+    toxicity: float = 0.0,
+    tick: float = 0.01,
     horizon: float | None = None,
     seed: int = 0,
 ) -> MarketMakingResult:
@@ -104,13 +115,22 @@ def simulate_market_making(
     deviation ``quoter.sigma * sqrt(dt)``. Each tick the maker observes the mid
     delayed by ``latency`` ticks, quotes a bid and ask, and posts them alongside
     background liquidity a fixed ``background_half_spread`` either side of the
-    *true* mid. A Poisson(``arrival_rate``) number of market orders then arrive,
-    each an equally likely buy or sell of ``order_size``, and walk the book; the
-    maker is filled only when its quote betters the background, so tighter quotes
-    win flow at the cost of thinner edge and more adverse selection under latency.
+    *true* mid. The maker's quotes are clipped to a ``tick`` inside the opposite
+    background quote so they can never rest on the wrong side of the book. A
+    Poisson(``arrival_rate``) number of market orders then arrive and walk the book;
+    the maker is filled only when its quote betters the background.
+
+    Order flow is a mix controlled by ``toxicity`` in [0, 1]: a fraction
+    ``toxicity`` of orders are *informed* -- their direction matches the sign of the
+    next mid move, so they systematically pick off a stale or mispriced quote just
+    before the price moves (genuine adverse selection) -- and the rest are
+    uninformed, equally likely to buy or sell. ``toxicity=0`` is the random-flow
+    control; latency and toxicity are independent channels of loss.
     """
     if latency < 0:
         raise ValueError("latency must be non-negative")
+    if not 0.0 <= toxicity <= 1.0:
+        raise ValueError("toxicity must be in [0, 1]")
     rng = np.random.default_rng(seed)
     total_time = horizon if horizon is not None else n_steps * dt
     step_sd = quoter.sigma * math.sqrt(dt)
@@ -133,15 +153,23 @@ def simulate_market_making(
 
         book = LimitOrderBook()
         true_mid = mids[t]
-        book.add_limit(Order(bg_id, "buy", round(true_mid - background_half_spread, 4), 100.0))
-        book.add_limit(Order(bg_id + 1, "sell", round(true_mid + background_half_spread, 4), 100.0))
+        bg_bid = round(true_mid - background_half_spread, 4)
+        bg_ask = round(true_mid + background_half_spread, 4)
+        book.add_limit(Order(bg_id, "buy", bg_bid, 100.0))
+        book.add_limit(Order(bg_id + 1, "sell", bg_ask, 100.0))
         bg_id += 2
-        if bid_px < ask_px:
+        # clip quotes to a tick inside the opposite background quote (no crossed book)
+        bid_px, ask_px = clip_to_book(bid_px, ask_px, bg_bid, bg_ask, tick)
+        if 0.0 < bid_px < ask_px:
             book.add_limit(Order(_BID_ID, "buy", round(bid_px, 4), order_size))
             book.add_limit(Order(_ASK_ID, "sell", round(ask_px, 4), order_size))
 
+        next_move = mids[t + 1] - mids[t]
         for _ in range(int(rng.poisson(arrival_rate))):
-            side = "buy" if rng.random() < 0.5 else "sell"
+            if rng.random() < toxicity and next_move != 0.0:
+                side = "buy" if next_move > 0.0 else "sell"  # informed: trades ahead of the move
+            else:
+                side = "buy" if rng.random() < 0.5 else "sell"
             for f in book.market_order(side, order_size, taker_id=taker_id):
                 if f.maker_id == _BID_ID:  # a market sell hit the maker's bid: maker buys
                     inventory += f.qty

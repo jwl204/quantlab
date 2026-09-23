@@ -1,3 +1,13 @@
+"""Regenerate the *core* headline metrics and a provenance manifest, offline.
+
+Covers the pricing validation, the AAPL stylised-fact moments and the basket
+strategy-vs-buy-and-hold comparison with block-bootstrap inference -- the numbers
+quoted in the README and final report. It deliberately does not re-run every study:
+the walk-forward, sensitivity grids, ETF robustness universe, Heston convergence
+and microstructure experiments have their own scripts (walk_forward.py,
+sensitivity.py, etf_universe.py, heston_convergence.py, run_microstructure.py).
+"""
+
 import json
 import platform
 import subprocess

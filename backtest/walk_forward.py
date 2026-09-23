@@ -21,9 +21,10 @@ def run_walk_forward(prices, candidate_windows, n_folds=5, cost_bps=5.0, min_tra
     """Stateful expanding-window walk-forward validation.
 
     In each sequential test fold the moving-average window is re-selected using only
-    data prior to that fold, and a single continuous portfolio is carried across folds
-    so the transition trade and its cost are charged when the selected window changes.
-    Returns (portfolio_result, folds_info).
+    data prior to that fold. A single continuous portfolio is carried across folds and
+    rebalances only on month-ends, so a newly selected window becomes active at the
+    next scheduled monthly rebalance, where the transition trade and its cost are
+    charged (not at the fold boundary itself). Returns (portfolio_result, folds_info).
     """
     dates = prices.index
     month_ends = pd.Series(index=dates, data=dates).resample("ME").last().dropna().values

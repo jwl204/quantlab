@@ -93,9 +93,35 @@ every block length. The same null holds under an expanding-window walk-forward t
 re-tunes the window each fold as one continuous portfolio (out-of-sample Sharpe difference -0.017, transition costs charged).
 
 **Conclusion:** no statistically significant Sharpe advantage for trend-following
-over a true buy-and-hold after costs — a clean, dependence-aware null result. The result is robust to costs, execution lag, rebalancing and the inference method, and holds on a bias-free sector-ETF universe (though the sign of the tiny, insignificant edge flips there, since survivor buy-and-hold benefits from the winners' compounding).
+over a true buy-and-hold after costs — a clean, dependence-aware null result. The result is robust to costs, execution lag, rebalancing and the inference method, and holds on a fixed sector-ETF universe that substantially reduces single-stock survivorship bias (though the sign of the tiny, insignificant edge flips there, since survivor buy-and-hold benefits from the winners' compounding).
 
-## 6. What this project demonstrates
+## 6. Market microstructure: where the money comes from
+
+The rest of the project treats price as one number per day. Real trading happens
+one order at a time against a limit order book, so this module drops to that level:
+an event-driven order book with price-time priority, and an inventory-aware
+market maker following Avellaneda-Stoikov. The maker forms a reservation price
+shifted against its inventory — quoting lower when long to encourage selling — and
+posts around it, competing with background liquidity for Poisson order flow.
+
+Total profit is decomposed **exactly** into spread capture (edge earned versus the
+mid at each fill) and inventory carry (mark-to-market on the position held while
+the mid drifts); the two reconcile to total P&L by a summation-by-parts identity,
+asserted in the tests. Averaged over 50 seeds with random flow and no latency, the
+maker earns +31.3 from spread capture with inventory carry netting to −0.2 — the
+skew keeps the position controlled, so profit is almost pure spread.
+
+The exact attribution earns its keep by separating two distinct frictions.
+Quoting **latency** (the maker quotes off a stale mid) drains *spread capture* —
+total P&L falls ~70% from zero to twenty ticks of delay even though fills rise,
+because stale quotes are attractive precisely when mispriced. Introducing informed
+(**toxic**) order flow, whose direction matches the next mid move, instead drains
+*inventory carry*: at high toxicity, inventory P&L falls to around −13 while spread
+capture stays high, because the maker is filled on the wrong side just before the
+price moves — genuine adverse selection, and mechanically distinct from the
+stale-quote cost. See `reports/microstructure.md`.
+
+## 7. What this project demonstrates
 
 - **Statistical rigour:** letting the data speak, and quantifying uncertainty
   rather than quoting a single Sharpe ratio.
@@ -105,7 +131,7 @@ over a true buy-and-hold after costs — a clean, dependence-aware null result. 
 - **Clean, reproducible code:** a small shared core, independent modules, tests,
   and a public repository.
 
-## 7. Reproducibility
+## 8. Reproducibility
 
 ```
 python -m venv .venv && pip install -e ".[dev]"
@@ -113,8 +139,13 @@ python -m empirical.stylised_facts   # the stylised facts
 python price_option.py               # pricing vs Black-Scholes
 python calibrate.py                  # model calibration
 python run_basket.py                 # the basket strategy study
+python run_microstructure.py         # market-making attribution and latency
 pytest -q                            # all tests
 ```
+
+Continuous integration (GitHub Actions) runs linting, type-checking, the full
+test suite on Python 3.11 and 3.12, and re-derives the headline numbers offline
+from a checksummed data snapshot on every push.
 
 ## Detailed stage reports
 
@@ -122,3 +153,4 @@ pytest -q                            # all tests
 - Heston model: `reports/heston.md`
 - Calibration: `reports/calibration.md`
 - Strategy backtest: `reports/strategy_backtest.md`
+- Market microstructure: `reports/microstructure.md`

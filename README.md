@@ -18,15 +18,24 @@ In progress. Currently implemented:
 - `empirical/` — a study of the statistical "stylised facts" of real returns
   (fat tails and volatility clustering); see `reports/stylised_facts.md`
 - `models/` — geometric Brownian motion and the Heston stochastic-volatility
-  model (Euler-Maruyama), plus historical parameter estimation
-- `pricing/` — the Black-Scholes formula and Monte Carlo option pricers
-  (European, Asian), with variance reduction
+  model (arithmetic-Euler and log-Euler schemes, full truncation), plus
+  historical parameter estimation
+- `pricing/` — the Black-Scholes formula, Monte Carlo option pricers (European,
+  Asian) with variance reduction, and a semi-analytic Heston pricer (from the
+  characteristic function)
 - `backtest/` — a holdings-based portfolio backtester (true buy-and-hold,
   rebalanced, and signal portfolios; no look-ahead; explicit costs and turnover)
   with a paired moving-block bootstrap for inference
-- `tests/` — unit tests for returns, pricing, models, and portfolio accounting
+- `microstructure/` — an event-driven limit order book (price-time priority) and
+  an inventory-aware Avellaneda-Stoikov market maker, with latency and informed
+  (toxic) order flow and an exact spread-vs-inventory P&L attribution; see
+  `reports/microstructure.md`
+- `tests/` — unit tests for returns, pricing, models, the semi-analytic Heston
+  pricer, portfolio accounting, the order book, and the market maker (52 tests)
 
-Planned: walk-forward with point-in-time constituents; market microstructure.
+An expanding-window walk-forward is implemented; using point-in-time index
+constituents (rather than the current fixed universe) is the main remaining
+extension.
 
 ## Key results so far
 
@@ -35,7 +44,7 @@ Planned: walk-forward with point-in-time constituents; market microstructure.
   clustering. See `reports/stylised_facts.md`.
 - **Pricing:** the Monte Carlo European-call price agrees with Black-Scholes to
   within 0.8%, with error scaling as 1/sqrt(N) (Central Limit Theorem); antithetic
-  variates give a ~2x variance reduction.
+  variates give a 2.1x variance reduction.
 - **Modelling:** the Heston model reproduces the empirical stylised facts
   endogenously. See `reports/heston.md`.
 - **Estimation:** GBM and Heston parameters estimated from AAPL returns (a
@@ -50,6 +59,13 @@ Planned: walk-forward with point-in-time constituents; market microstructure.
   expanding-window walk-forward with per-fold retuning. An earlier draft's apparent
   edge was traced to a mislabelled rebalanced benchmark and an IID bootstrap, and
   corrected. See `reports/strategy_backtest.md`.
+- **Microstructure:** an inventory-aware market maker on a simulated limit order
+  book earns almost entirely from spread capture (inventory carry nets to ~0 under
+  the Avellaneda-Stoikov skew). The exact P&L attribution separates two frictions:
+  quoting **latency** drains *spread capture* (a stale-quote cost, total P&L down
+  ~70% by 20 ticks of delay even as fills rise), while **informed (toxic) flow**
+  drains *inventory carry* — genuine adverse selection. See
+  `reports/microstructure.md`.
 
 ## Setup
 
@@ -65,8 +81,11 @@ pip install -e ".[dev]"
 python -m empirical.stylised_facts   # the stylised-facts analysis
 python price_option.py               # Monte Carlo vs Black-Scholes, and an Asian option
 python calibrate.py                  # estimate GBM and Heston from data
+python heston_convergence.py         # discretisation-error study vs the semi-analytic price
 python run_basket.py                 # holdings-based portfolios: BH, rebalanced, strategy
 python walk_forward.py               # expanding-window walk-forward validation
-python run_research.py               # regenerate all headline results + provenance manifest
-pytest -q                            # run the tests
+python etf_universe.py               # robustness on a fixed sector-ETF universe
+python run_microstructure.py         # market-making P&L attribution: latency and toxic flow
+python run_research.py               # regenerate the core headline metrics + provenance manifest
+pytest -q                            # run the tests (52)
 ```

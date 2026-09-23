@@ -53,6 +53,19 @@ mid, then a Poisson number of market orders arrive and walk the book through the
 matching engine. The maker is filled only when its quote *betters* the
 background — so tighter quotes win more flow, at the cost of thinner edge.
 
+To keep the book well-formed, the maker's quotes are **clipped to a tick inside
+the opposite background quote** (`clip_to_book`): a large inventory skew can push
+the reservation price far enough that a raw quote would cross, and the passive
+`add_limit` does not match crossing orders, so clipping prevents a bid ever
+resting at or above the best ask (and vice versa).
+
+Order flow is a controllable mix (`toxicity` in [0, 1]). A fraction `toxicity` of
+orders are **informed**: their direction matches the sign of the *next* mid move,
+so they systematically trade just ahead of the price. The rest are uninformed
+(equally likely to buy or sell). `toxicity = 0` is the random-flow control. This
+matters because latency and informed flow are *different* loss channels, and the
+P&L attribution below separates them.
+
 ## P&L attribution
 
 Total profit is decomposed exactly into two economically distinct pieces:
@@ -69,39 +82,61 @@ drifts. These reconcile to total P&L *by construction* (a summation-by-parts
 identity), and the test suite asserts the residual is numerically zero.
 
 Averaged over 50 seeds of 1,500 ticks (gamma = 0.1, sigma = 0.05, k = 20,
-background half-spread = 0.15), with no latency:
+background half-spread = 0.15), random flow with no latency:
 
 | Component | Mean P&L |
 |---|---|
-| Spread capture | +30.9 |
-| Inventory carry | −0.3 |
-| **Total** | **+30.6** |
+| Spread capture | +31.3 |
+| Inventory carry | −0.2 |
+| **Total** | **+31.1** |
 
 Almost all the profit is spread capture; the inventory-carry term is close to
 zero because the reservation-price skew keeps the position from drifting far.
 The maximum reconciliation error across all runs is ~1e-13.
 
-## The cost of latency (adverse selection)
+## Two loss channels, cleanly separated
 
-Latency is modelled by having the maker quote off a mid observed `latency` ticks
-in the past. Stale quotes sit at prices that are favourable to *takers* just
-before the mid moves, so informed flow picks them off — classic adverse
-selection. Averaging over 50 seeds:
+The value of an *exact* attribution is that different frictions hit different
+terms. The simulation isolates two.
+
+**Latency — a stale-quote loss (hits spread capture).** With latency the maker
+quotes off a mid observed `latency` ticks in the past. Even against purely random
+flow this loses money, because the quote lags the walk and fills happen at worse
+prices relative to the current mid. Averaging over 50 seeds (random flow):
 
 | Latency (ticks) | Total P&L | Spread capture | Inventory carry | Fills |
 |---|---|---|---|---|
-| 0 | 30.6 | 30.9 | −0.3 | 494 |
-| 1 | 23.2 | 23.5 | −0.2 | 597 |
-| 2 | 19.4 | 19.6 | −0.2 | 613 |
-| 5 | 13.7 | 13.6 | +0.1 | 623 |
-| 10 | 8.8 | 8.7 | +0.1 | 618 |
-| 20 | 4.6 | 4.8 | −0.2 | 613 |
+| 0 | 31.1 | 31.3 | −0.2 | 499 |
+| 1 | 23.6 | 23.7 | −0.1 | 596 |
+| 2 | 20.1 | 20.1 | 0.0 | 615 |
+| 5 | 15.7 | 15.4 | +0.3 | 627 |
+| 10 | 12.0 | 11.7 | +0.4 | 617 |
+| 20 | 9.8 | 9.5 | +0.3 | 612 |
 
-The striking part is that **fills go up while profit collapses**. A slow maker
-gets *more* trades — its stale quotes are attractive precisely when they are
-mispriced — but each fill is worse, so total P&L falls by ~85% from zero to
-twenty ticks of delay. This is the quantitative signature of adverse selection,
-and it is why real market makers spend heavily on speed.
+Note that **fills go up while profit falls**: a slow maker gets *more* trades
+(its stale quotes are attractive precisely when mispriced) but each is worse, and
+the loss lands almost entirely in **spread capture** while inventory carry stays
+near zero. This is a stale-quote / latency cost, not adverse selection in the
+informed-trader sense — the flow here is random, so it is worth naming precisely.
+
+**Toxic flow — genuine adverse selection (hits inventory carry).** Setting
+`toxicity > 0` makes a fraction of orders informed, trading in the direction of
+the next mid move. Now the maker is filled precisely on the wrong side just before
+the price moves, so it accumulates adverse inventory. With no latency at all,
+averaging over 50 seeds:
+
+| Toxicity | Total P&L | Spread capture | Inventory carry | Fills |
+|---|---|---|---|---|
+| 0.00 | 31.1 | 31.3 | −0.2 | 499 |
+| 0.25 | 26.1 | 30.2 | −4.0 | 489 |
+| 0.50 | 19.3 | 27.4 | −8.1 | 462 |
+| 0.75 | 13.0 | 23.8 | −10.7 | 425 |
+| 0.90 | 7.7 | 21.1 | −13.4 | 396 |
+
+Here spread capture stays high but the **inventory-carry term collapses** — the
+signature of adverse selection, and mechanically distinct from the latency loss
+above. The exact attribution is what lets the two be told apart: latency drains
+spread capture, informed flow drains inventory carry.
 
 ## Reproduce
 
@@ -116,9 +151,11 @@ book and the market maker are covered by `tests/test_orderbook.py` and
 ## Limitations
 
 The mid is an exogenous random walk, so there is no feedback from the maker's own
-trades into the price (no permanent market impact). Background liquidity is a
-single level rather than a full depth profile, and the fill mechanism is
-competition against that level rather than a calibrated intensity curve. These
-are deliberate simplifications: the goal is a transparent, testable illustration
-of inventory management, spread capture and adverse selection, not a production
-market-making engine.
+trades into the price (no permanent market impact). The informed-flow model uses a
+one-step look-ahead (direction matches the very next mid move) as a stylised proxy
+for toxicity rather than a fully specified informed-trader model. Background
+liquidity is a single level rather than a full depth profile, and the fill
+mechanism is competition against that level rather than a calibrated intensity
+curve. These are deliberate simplifications: the goal is a transparent, testable
+illustration of inventory management, spread capture, latency cost and adverse
+selection, not a production market-making engine.

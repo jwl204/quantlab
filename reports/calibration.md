@@ -62,12 +62,16 @@ and here even a little too heavy.
 
 **Negative skew: right sign, wrong reason.** The skew came out negative, but this
 is *not* the leverage effect: the calibrated rho is ~0, so the model has almost no
-price-variance coupling, and exact Heston with rho = 0 has zero skew. The observed
-skew is a **discretization artifact**: the arithmetic Euler scheme means log
-returns are ln(1 + shock), and ln is concave, so symmetric shocks produce
-left-skewed log returns — amplified by the high vol-of-vol. The violated Feller
-condition (2*kappa*theta = 0.41 < xi^2 = 0.70) makes the variance hit zero often,
-adding further bias.
+price-variance coupling. At rho = 0 exact Heston still has a *small* negative
+finite-horizon skew (the -1/2 int v dt drift acting on a right-skewed integrated
+variance), but nowhere near the magnitude shown here. Most of the observed skew is a
+**discretization artifact**: under the arithmetic Euler scheme log returns are
+ln(1 + shock), and ln is concave, so symmetric shocks produce left-skewed log
+returns — amplified by the high vol-of-vol. The convergence study confirms this: the
+arithmetic scheme's rho = 0 daily skew (~-0.11 at one step per day) shrinks toward
+the log-Euler value (~-0.02) and toward zero as the step is refined (see
+`reports/heston.md`). The violated Feller condition (2*kappa*theta = 0.41 < xi^2 =
+0.70) makes the variance hit zero often, adding further bias.
 
 The key lesson: an output looking correct is not the same as the mechanism being
 captured. The returns-based calibration recovers the parameters returns can reveal
@@ -81,10 +85,13 @@ shows is numerical, not economic.
   better recovered from option prices (Q-measure) with the semi-analytic Heston
   pricer.
 - A log-Euler scheme (now implemented; see `reports/heston.md` and
-  `reports/figures/heston_convergence.png`) halves the spurious skew (-0.178 to
-  -0.086 at rho = 0) and keeps prices positive. The residual reflects the violated
-  Feller condition (0.64); a higher-order scheme (e.g. Andersen QE) would reduce it
-  further.
+  `reports/figures/heston_convergence.png`) sharply reduces the spurious skew at
+  rho = 0 and keeps prices positive; the remaining skew shrinks toward zero as the
+  time step is refined, confirming most of it is numerical. A higher-order scheme
+  (e.g. Andersen QE) would reduce the residual further.
+- A semi-analytic Heston pricer (`pricing/heston_analytic.py`, from the
+  characteristic function) is now available and is used as the exact benchmark for
+  the discretisation-error study.
 
 ## How to reproduce
 

@@ -2,6 +2,7 @@ import pytest
 
 from microstructure.market_maker import (
     AvellanedaStoikovQuoter,
+    clip_to_book,
     simulate_market_making,
 )
 
@@ -28,6 +29,22 @@ def test_quotes_are_ordered():
 def test_invalid_parameters_raise():
     with pytest.raises(ValueError):
         AvellanedaStoikovQuoter(gamma=-1.0, sigma=0.5, k=1.5)
+
+
+def test_toxicity_out_of_range_raises():
+    q = AvellanedaStoikovQuoter(gamma=0.1, sigma=0.05, k=20.0)
+    with pytest.raises(ValueError):
+        simulate_market_making(quoter=q, n_steps=10, toxicity=1.5)
+
+
+def test_clip_to_book_prevents_crossing():
+    # a bid above the background ask is pulled a tick below it; an ask below the
+    # background bid is pushed a tick above it; valid quotes are left untouched
+    bid, ask = clip_to_book(bid=101.0, ask=99.0, bg_bid=99.9, bg_ask=100.1, tick=0.01)
+    assert bid == pytest.approx(100.09) and ask == pytest.approx(99.91)
+    assert bid < 100.1 and ask > 99.9
+    bid2, ask2 = clip_to_book(99.95, 100.05, 99.9, 100.1, 0.01)
+    assert bid2 == pytest.approx(99.95) and ask2 == pytest.approx(100.05)
 
 
 def test_pnl_attribution_reconciles():
@@ -63,3 +80,31 @@ def test_latency_reduces_profit_on_average():
 
     # stale quotes get adversely selected: market-making profit falls with latency
     assert mean_total_pnl(latency=10) < mean_total_pnl(latency=0)
+
+
+def test_toxic_flow_reduces_profit_via_inventory():
+    q = AvellanedaStoikovQuoter(gamma=0.1, sigma=0.05, k=20.0)
+
+    def means(toxicity):
+        runs = [
+            simulate_market_making(
+                quoter=q,
+                n_steps=1500,
+                background_half_spread=0.15,
+                arrival_rate=1.0,
+                toxicity=toxicity,
+                seed=s,
+            )
+            for s in range(20)
+        ]
+        return (
+            sum(r.total_pnl for r in runs) / len(runs),
+            sum(r.inventory_pnl for r in runs) / len(runs),
+        )
+
+    total_control, inv_control = means(0.0)
+    total_toxic, inv_toxic = means(0.8)
+    # informed flow is genuine adverse selection: lower total profit, driven by a
+    # much more negative inventory-carry term than the random-flow control
+    assert total_toxic < total_control
+    assert inv_toxic < inv_control
